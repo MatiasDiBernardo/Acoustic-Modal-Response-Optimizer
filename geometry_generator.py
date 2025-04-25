@@ -215,7 +215,7 @@ def plot_walls(screen, walls_pos):
 
 # Main loop
 # Define the event
-refresh_rate = 500  # In ms
+refresh_rate = 1000  # In ms
 UPDATE_EVERY_SECOND = pygame.USEREVENT + 1
 pygame.time.set_timer(UPDATE_EVERY_SECOND, refresh_rate)
 # Define the clock
@@ -263,13 +263,13 @@ while running:
             valid_geometry = False
     
     if valid_geometry:
-        screen.blit(label_invalid, (Lx//2 + 200, PadY//2))
-        points = 0
+        screen.blit(label_valid, (Lx//2 + 200, PadY//2))
+        points += 1
         label_points = font.render(f"Score: {points}", True, (255, 255, 255))
         screen.blit(label_points, (Lx//2 - 200, PadY//2))
     else:
-        screen.blit(label_valid, (Lx//2 + 200, PadY//2))
-        points += 1
+        screen.blit(label_invalid, (Lx//2 + 200, PadY//2))
+        points = 0
         label_points = font.render(f"Score: {points}", True, (255, 255, 255))
         screen.blit(label_points, (Lx//2 - 200, PadY//2))
 

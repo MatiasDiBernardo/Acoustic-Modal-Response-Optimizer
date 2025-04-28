@@ -3,6 +3,23 @@ import pygame
 from geometry import WallsGenerator
 import numpy as np
 
+def grid_random_sampler(points_grid, ammount_of_walls):
+    """Genera puntos random para marcar las intersecciones (pardes).
+
+    Args:
+        points_grid (int): Cantidad de puntos en la grilla.
+        ammount_of_walls (int): Cantidad de paredes (cortes).
+
+    Returns:
+        np.array: Vector con un 1 donde tiene que ir un vértice.
+    """
+    mtx = np.zeros(points_grid)
+    for i in range(ammount_of_walls):
+        idx_rndm = np.random.randint(0, points_grid)
+        mtx[idx_rndm] = 1
+    
+    return mtx
+
 def visualization_of_geometry():
     # Initialize Pygame
     pygame.init()
@@ -14,8 +31,8 @@ def visualization_of_geometry():
     pygame.display.set_caption("Walls Generator")
 
     # Parámetros de la sala
-    Lx = 400     # Largo de la sala en X
-    Ly = 600     # Largo de la sala en Y
+    Lx = 200     # Largo de la sala en X
+    Ly = 400     # Largo de la sala en Y
     Dx = 80      # Delta X
     Dy = 100     # Delta Y
     PadX = 100   # Espaciado en X (visualizacion)
@@ -23,7 +40,7 @@ def visualization_of_geometry():
     N = 250      # Densidad de la grilla
     n_walls = 4  # Número de cortes en las paredes
 
-    wall = WallsGenerator(Lx, Ly, Dx, Dy, PadX, PadY, N, n_walls)
+    wall = WallsGenerator(Lx, Ly, Dx, Dy, PadX, PadY, N, n_walls, True)
 
     # Main loop
     # Define the event
@@ -33,14 +50,6 @@ def visualization_of_geometry():
     # Define the clock
     clock = pygame.time.Clock()
     running = True
-
-    def grid_random_sampler(points_grid, ammount_of_walls):
-        mtx = np.zeros(points_grid)
-        for i in range(ammount_of_walls):
-            idx_rndm = np.random.randint(0, points_grid)
-            mtx[idx_rndm] = 1
-        
-        return mtx
 
     # Defini intial condition
     grid_random = grid_random_sampler(N, n_walls)
@@ -55,6 +64,7 @@ def visualization_of_geometry():
                 wall.score += 1
                 # Genera puntos random
                 grid_random = grid_random_sampler(N, n_walls)
+                #print(wall.normalize_coordinates())
                 
                 # Actualiza los puntos de inicio y final las dimensiones
                 wall.update_walls()
@@ -91,17 +101,55 @@ def visualization_of_geometry():
     # Clean up and exit
     pygame.quit()
     sys.exit()
+    
+def comparison(M, V):
+    for i in range(M.shape[0]):
+        if np.all(M[i,:] == V):
+            return True
+
+    return False
 
 def calculation_of_geometry():
-
     # Parámetros de la sala
     Lx = 400     # Largo de la sala en X
     Ly = 600     # Largo de la sala en Y
     Dx = 80      # Delta X
     Dy = 100     # Delta Y
+
     PadX = 100   # Espaciado en X (visualizacion)
     PadY = 100   # Espaciado en Y (visualización)
     N = 250      # Densidad de la grilla
     n_walls = 4  # Número de cortes en las paredes
+    screen = 0
+    
+    # Salas a generar
+    M = 1000
+    prev_generations = np.zeros((1, N))
+    valid_rooms = []
 
-    wall = WallsGenerator(Lx, Ly, Dx, Dy, PadX, PadY, N, n_walls)
+    # Inicializa el generador
+    wall = WallsGenerator(Lx, Ly, Dx, Dy, PadX, PadY, N, n_walls, False)
+    
+    # Genera las salas
+    while len(valid_rooms) < M:
+        grid_random = grid_random_sampler(N, n_walls)
+        
+        # Genera grilla y puntos
+        wall.intial_condition_grid(screen)
+        wall.dots_grid(screen, grid_random)
+        
+        # Si es válido y no se repite agregarlo
+        if wall.is_valid():
+            coord = wall.normalize_coordinates()
+            repetition = comparison(prev_generations, grid_random)
+
+            if not repetition:
+                valid_rooms.append(coord)
+        
+        # Guarda el cuarto generado
+        prev_generations = np.vstack([prev_generations, grid_random])
+    
+    return valid_rooms
+
+# Ejemplo de generar 1000 salas válidas (tarda entre 5 a 10 segundos aproximadamente)
+rooms = calculation_of_geometry()

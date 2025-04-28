@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 
 class WallsGenerator():
-    def __init__(self, Lx, Ly, Dx, Dy, PadX, PadY, N, num_walls):
+    def __init__(self, Lx, Ly, Dx, Dy, PadX, PadY, N, num_walls, draw):
         self.Lx = Lx
         self.Ly = Ly
         self.Dx = Dx
@@ -12,6 +12,7 @@ class WallsGenerator():
         self.N = N
         self.num_walls = num_walls
         self.points_initial_wall = 12
+        self.draw = draw
         
         # Condiciones de control
         self.score = 0
@@ -93,7 +94,9 @@ class WallsGenerator():
                 self.pos_wall_initial.append(pos)
             else:
                 color = (0, 0, 255) 
-            pygame.draw.circle(screen, color, pos, thickness)
+
+            if self.draw:
+                pygame.draw.circle(screen, color, pos, thickness)
 
         # Grid pared final
         for i in range(len(self.finish_wall)):
@@ -104,9 +107,9 @@ class WallsGenerator():
             else:
                 color = (0, 0, 255) 
 
-            pygame.draw.circle(screen, color, pos, thickness)
+            if self.draw:
+                pygame.draw.circle(screen, color, pos, thickness)
         
-        return self.pos_wall_initial, self.pos_wall_final
 
     def dots_grid(self, screen, grid_points):
         # Area calc
@@ -159,7 +162,10 @@ class WallsGenerator():
                 row = 0
                 pos = (spx + dx * row, spy + dx * col)
                 row += 0
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -167,7 +173,10 @@ class WallsGenerator():
             if spx + dx * row < x_margin1 and spy + dx * col < y_margin1:  
                 pos = (spx + dx * row, spy + dx * col)
                 row += 1
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -178,7 +187,10 @@ class WallsGenerator():
                 row = 0
                 pos = (spx + dx * row, spy + dx * col)
                 row += 1
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -186,7 +198,10 @@ class WallsGenerator():
             if spx + dx * row < x_margin2 and spy + dx * col < y_margin2:  
                 pos = (spx + dx * row, spy + dx * col)
                 row += 1
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -197,7 +212,10 @@ class WallsGenerator():
                 row = 0
                 pos = (spx + dx * row, spy + dx * col)
                 row += 1
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -205,7 +223,10 @@ class WallsGenerator():
             if spx + dx * row < x_margin3 and spy + dx * col < y_margin3:  
                 pos = (spx + dx * row, spy + dx * col)
                 row += 1
-                pygame.draw.circle(screen, color, pos, thickness)
+
+                if self.draw:
+                    pygame.draw.circle(screen, color, pos, thickness)
+
                 if grid_points[i] == 1:
                     self.pos_wall_middle.append(pos)
                 continue
@@ -230,12 +251,20 @@ class WallsGenerator():
     def normalize_coordinates(self):
         """
         Esta función mapea las posiciones en el plano de PyGame a un escenario real.
+        Toma como eje de coordenadas el punto arriba a la izquierda. La conversión es 100 px = 1 mts
         """
-        a = 0
+        walls = self.pos_wall_initial + self.pos_wall_middle + self.pos_wall_final
+        norm_walls = []
+        for w in walls:
+            x = (w[0] - self.PadX) / 100
+            y = (w[1] - self.PadY) / 100
+            norm_walls.append((x, y))
+        
+        return np.array(norm_walls)
 
 # Idea para implementar 
 # Yo genero con este algoritmo 1000 salas válidas
 # De esas mil salas válidas, se ordenan por mérito y con las primeras 200 entran en el algo genético
-# De esas doscientas, se generar pequeñas perturbaciones (mover a derecha o izquierda de la grilla)
+# De esas doscientas, se generar pequeñas perturbaciones (mover los puntos random dentro de un radio)
 # Para determinar la mejor geometría.
 

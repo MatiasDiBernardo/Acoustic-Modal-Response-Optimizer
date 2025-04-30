@@ -1,6 +1,7 @@
 from dolfin import *
-from mshr import Box, generate_mesh
 import numpy as np
+from dolfin import Function, File
+import matplotlib.pyplot as plt
 
 # Room dimensions (m)
 Lx, Ly, Lz = 3.0, 2.5, 2.2
@@ -8,10 +9,15 @@ Lx, Ly, Lz = 3.0, 2.5, 2.2
 # Speed of sound
 c = 343.0  # m/s
 
-# 1) Create mesh
-domain = Box(Point(0.0, 0.0, 0.0), Point(Lx, Ly, Lz))
-# Increase resolution for better accuracy (at cost of CPU/memory)
-mesh = generate_mesh(domain, 32)
+# # 1) Create mesh
+# domain = Box(Point(0.0, 0.0, 0.0), Point(Lx, Ly, Lz))
+# # Increase resolution for better accuracy (at cost of CPU/memory)
+# mesh = generate_mesh(domain, 32)
+
+# 1) Read mesh from 3D geometry generator
+mesh = Mesh()
+with XDMFFile("room.xdmf") as xf:
+    xf.read(mesh)
 
 # 2) Function space (P1 Lagrange)
 V = FunctionSpace(mesh, "Lagrange", 1)
@@ -56,9 +62,18 @@ for i, lam, freq in modes:
     print(f"{i:6d}   {lam:10.4e}   {freq:8.2f}")
 
 # 9) (Optional) Save first mode for visualization
-# from dolfin import Function, File
-# idx = modes[0][0]
-# r0, _, vec0, _ = eigensolver.get_eigenpair(idx)
-# mode0 = Function(V)
-# mode0.vector()[:] = vec0
-# File("mode1_3D.pvd") << mode0
+
+idx = 2
+r0, _, vec0, _ = eigensolver.get_eigenpair(idx)
+mode1 = Function(V)
+mode1.vector()[:] = vec0
+
+# 10) Save files for visualization with PyVista
+
+# Write out the mesh (so meshio can read it later too)
+with XDMFFile("room_mesh.xdmf") as mesh_file:
+    mesh_file.write(mesh)
+
+# Write out the eigenfunction
+with XDMFFile("mode1.xdmf") as mode_file:
+    mode_file.write(mode1)

@@ -153,9 +153,9 @@ def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
             if not repetition:
                 # Agrega las paredes simetricas
                 coord_copy = np.copy(coord)
-                for i in range(len(coord_copy) - 1, 0, -1):
-                    new_x = (Lx/100) - coord_copy[i, 0]
-                    new_y = coord_copy[i, 1]
+                for i in range(len(coord_copy), 0, -1):
+                    new_x = (Lx/100) - coord_copy[i - 1, 0]
+                    new_y = coord_copy[i - 1, 1]
                     coord = np.vstack([coord, (new_x, new_y)])
 
                 valid_rooms.append(coord)

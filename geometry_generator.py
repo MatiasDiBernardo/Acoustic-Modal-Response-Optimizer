@@ -109,21 +109,28 @@ def comparison(M, V):
 
     return False
 
-def calculation_of_geometry():
-    # Parámetros de la sala
-    Lx = 400     # Largo de la sala en X
-    Ly = 600     # Largo de la sala en Y
-    Dx = 80      # Delta X
-    Dy = 100     # Delta Y
+def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
+    """Genera puntos de posibles geometrías de control room.
 
-    PadX = 100   # Espaciado en X (visualizacion)
-    PadY = 100   # Espaciado en Y (visualización)
-    N = 250      # Densidad de la grilla
-    n_walls = 4  # Número de cortes en las paredes
+    Args:
+        Lx (int): Largo de la sala en X
+        Ly (int): Largo de la sala en Y
+        Dx (int): Delta X
+        Dy (int): Delta Y
+        N (int): Densidad de la grilla interna para generar los puntos
+        M (int): Cantidad de salas
+        n_walls (int): Cantidad de paredes (cortes) en un solo lado del cuarto
+
+    Returns:
+        list[(points)]: Devuelve una lista de M salas con los puntos de los vérticas de las paredes
+    """
+
+    # Parámetros de la sala
+    PadX = 0   # Espaciado en X (visualizacion)
+    PadY = 0   # Espaciado en Y (visualización)
     screen = 0
     
     # Salas a generar
-    M = 1000
     prev_generations = np.zeros((1, N))
     valid_rooms = []
 
@@ -144,12 +151,16 @@ def calculation_of_geometry():
             repetition = comparison(prev_generations, grid_random)
 
             if not repetition:
+                # Agrega las paredes simetricas
+                coord_copy = np.copy(coord)
+                for i in range(len(coord_copy) - 1, 0, -1):
+                    new_x = (Lx/100) - coord_copy[i, 0]
+                    new_y = coord_copy[i, 1]
+                    coord = np.vstack([coord, (new_x, new_y)])
+
                 valid_rooms.append(coord)
         
         # Guarda el cuarto generado
         prev_generations = np.vstack([prev_generations, grid_random])
     
     return valid_rooms
-
-# Ejemplo de generar 1000 salas válidas (tarda entre 5 a 10 segundos aproximadamente)
-rooms = calculation_of_geometry()

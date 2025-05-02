@@ -8,10 +8,13 @@ def generate_mesh(floor_coords, Z):
         floor_coords (list): List of points (X, Y) with the vertices of the geometry
         Z (int): Hight of the room (Z coordenate) in meters
     """
+    # Definir esto en base a la frecuencia para optimizar
+    mesh_setp_size = 0.2  # Original es 0.1
+    layers_in_extrapolate = 8  # Original 10
 
     with pygmsh.geo.Geometry() as geom:
-        poly = geom.add_polygon(floor_coords, mesh_size=0.1)
-        geom.extrude(poly, translation_axis=[0,0,Z], num_layers=10)
+        poly = geom.add_polygon(floor_coords, mesh_size=mesh_setp_size)
+        geom.extrude(poly, translation_axis=[0,0,Z], num_layers=layers_in_extrapolate)
         msh = geom.generate_mesh()
 
     # 2) Pull out _only_ the tetrahedral cells

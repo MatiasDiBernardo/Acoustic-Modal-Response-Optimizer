@@ -20,6 +20,22 @@ def grid_random_sampler(points_grid, ammount_of_walls):
     
     return mtx
 
+def comparison(M, V):
+    """Comapra si de la matrix M contiene el elemento V.
+
+    Args:
+        M (np.array[AxB]): Matriz con vectores V estaqueados. Tiene A vector de dimensión B.
+        V (np.array[A]): Vector a evaluar si esta en la matriz o no.
+
+    Returns:
+        bool: Si V esta en M
+    """
+    for i in range(M.shape[0]):
+        if np.all(M[i,:] == V):
+            return True
+
+    return False
+
 def visualization_of_geometry():
     # Initialize Pygame
     pygame.init()
@@ -102,12 +118,6 @@ def visualization_of_geometry():
     pygame.quit()
     sys.exit()
     
-def comparison(M, V):
-    for i in range(M.shape[0]):
-        if np.all(M[i,:] == V):
-            return True
-
-    return False
 
 def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
     """Genera puntos de posibles geometrías de control room.

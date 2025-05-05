@@ -261,10 +261,3 @@ class WallsGenerator():
             norm_walls.append((x, y))
         
         return np.array(norm_walls)
-
-# Idea para implementar 
-# Yo genero con este algoritmo 1000 salas válidas
-# De esas mil salas válidas, se ordenan por mérito y con las primeras 200 entran en el algo genético
-# De esas doscientas, se generar pequeñas perturbaciones (mover los puntos random dentro de un radio)
-# Para determinar la mejor geometría.
-

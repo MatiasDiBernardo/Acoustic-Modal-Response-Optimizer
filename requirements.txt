@@ -1,5 +1,5 @@
-pygmsh
 pygame
 meshio
 h5py
+gmsh
 pyvista

@@ -4,23 +4,22 @@ import gmsh
 import numpy as np
 
 gmsh.initialize()
-gmsh.model.add("pulsating_sphere_mode_222") # Nombre actualizado
+gmsh.model.add("pulsating_sphere_very_small_refined") # Nombre actualizado
 
 # Crear directorio de salida si no existe
 output_directory = "mallado"
 os.makedirs(output_directory, exist_ok=True)
 
 # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
-# Paralelepípedo
-Lx = 3.0
-Ly = 2.0
-Lz = 2.0
+# Paralelepípedo (dominio pequeño)
+Lx = 2.0
+Ly = 1.5
+Lz = 1.0
 
 # Fuente esférica
-# Posición de la esfera cerca de la esquina (0,0,0)
-x_esfera = 0.3
-y_esfera = 0.3
-z_esfera = 0.3
+x_esfera = 0.5
+y_esfera = 0.5
+z_esfera = 0.5
 r_esfera = 0.25 # Radio de la esfera interior
 
 print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")
@@ -47,7 +46,6 @@ gmsh.model.occ.synchronize() # Hasta ahora tenemos un volumen, y las superficies
 
 
 # --- Ahora hay que etiquetar los grupos físicos: Volumen, y superficies ---
-# Asegurarse que 'dominio' no esté vacío después del corte
 if not dominio:
      print("ERROR: La operación de corte no produjo un volumen resultante (dominio vacío).")
      gmsh.finalize()
@@ -113,7 +111,6 @@ for i_idx in range(len(bbox_list)):
     identity_found_for_surface_i = False 
 
     # --- Comprobación de Paredes ---
-    # Comprobación Z
     if abs(current_bb[2] - current_bb[5]) < epsilon: 
         if abs(current_bb[2] - 0) < epsilon: 
             tags_superficies_nombradas["inferior"] = current_surface_tag
@@ -121,7 +118,7 @@ for i_idx in range(len(bbox_list)):
         elif abs(current_bb[2] - Lz) < epsilon: 
             tags_superficies_nombradas["superior"] = current_surface_tag
             identity_found_for_surface_i = True
-    # Comprobación X
+    
     if not identity_found_for_surface_i and abs(current_bb[0] - current_bb[3]) < epsilon: 
         if abs(current_bb[0] - 0) < epsilon: 
             tags_superficies_nombradas["trasera"] = current_surface_tag
@@ -129,7 +126,7 @@ for i_idx in range(len(bbox_list)):
         elif abs(current_bb[0] - Lx) < epsilon: 
             tags_superficies_nombradas["frontal"] = current_surface_tag
             identity_found_for_surface_i = True
-    # Comprobación Y
+
     if not identity_found_for_surface_i and abs(current_bb[1] - current_bb[4]) < epsilon: 
         if abs(current_bb[1] - 0) < epsilon: 
             tags_superficies_nombradas["izquierda"] = current_surface_tag
@@ -207,14 +204,15 @@ print(f"Grupo Físico de Volumen 'dominio_volumetrico' (Tag Físico: {volumen_ph
 # --- Configuración y Generación de Malla ---
 gmsh.option.setNumber("Mesh.Algorithm3D", 4) # Netgen
 
-# *** CAMBIO: Tamaños de malla ajustados para 268 Hz (lambda ~ 1.28m) ***
-min_lc = 0.01 # Tamaño cerca de la esfera (r_esfera / 10)
-max_lc = 0.05 # Tamaño lejos de la esfera (lambda / 10)
+# *** CAMBIO: Tamaños de malla refinados ***
+min_lc = 0.025 # r_esfera / 10
+max_lc = 0.125 # 
 
 gmsh.option.setNumber("Mesh.CharacteristicLengthMin", min_lc)
 gmsh.option.setNumber("Mesh.CharacteristicLengthMax", max_lc)
 print(f"Tamaño característico de malla: Min={min_lc}, Max={max_lc}")
 
+# Mantenemos orden 2 para la geometría de la esfera
 gmsh.model.mesh.setOrder(2)
 print("Establecido orden de la malla a 2 (elementos cuadráticos).")
 
@@ -225,13 +223,14 @@ print("Generando malla 3D de segundo orden...")
 gmsh.model.mesh.generate(3)
 print("Malla generada.")
 
-# *** CAMBIO: Nombre de archivo para modo 222 ***
-mesh_output_filename = os.path.join(output_directory, "esfera_en_paralelepipedo_268Hz_mode222.msh")
+# *** CAMBIO: Nombre de archivo para malla refinada ***
+mesh_output_filename = os.path.join(output_directory, "esfera_en_paralelepipedo_refined.msh")
 print(f"Guardando malla en: {mesh_output_filename}")
 gmsh.write(mesh_output_filename)
 print("Malla guardada.")
 
-gmsh.fltk.run()
+# Descomenta si quieres ver la malla antes de salir
+# gmsh.fltk.run() 
 
 gmsh.finalize()
 print("Gmsh finalizado.")

@@ -16,7 +16,7 @@ import traceback # Import traceback for better error reporting
 
 # --- 1. Parámetros físicos y de la simulación ---
 # *** Usando frecuencia cercana a la resonancia (1,0,0) para Lx=3m ***
-frequency = 268.0  # Hz (Ajustado a la frecuencia modal esperada)
+frequency = 30  # Hz (Ajustado a la frecuencia modal esperada)
 omega = 2 * np.pi * frequency # Frecuencia angular (rad/s)
 c0 = 343.0          # Velocidad del sonido en el aire (m/s)
 rho0 = 1.225        # Densidad del aire (kg/m^3)
@@ -42,7 +42,7 @@ print("Condición en paredes exteriores: Neumann Homogénea (dp/dn = 0)")
 # --- 2. Cargar malla ---
 # *** Asegúrate de usar la malla correspondiente a Lx=3, Ly=2, Lz=2, r=0.25 ***
 # Asumiremos que se llama como en tu último script de Gmsh, pero verifica el nombre
-mesh_filename = "mallado/esfera_en_paralelepipedo_268Hz_mode222.msh" # VERIFICA ESTE NOMBRE
+mesh_filename = "mallado/esfera_en_paralelepipedo_refined.msh" # VERIFICA ESTE NOMBRE
 print(f"\n--- Cargando malla desde: {mesh_filename} ---")
 try:
     # Leer la malla y los tags de celdas y facetas

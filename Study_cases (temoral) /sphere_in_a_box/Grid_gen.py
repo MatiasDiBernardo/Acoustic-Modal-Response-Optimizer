@@ -17,9 +17,9 @@ Ly = 1.5
 Lz = 1.0
 
 # Fuente esférica
-x_esfera = 0.5
-y_esfera = 0.5
-z_esfera = 0.5
+x_esfera = 0.3
+y_esfera = 0.3
+z_esfera = 0.3
 r_esfera = 0.25 # Radio de la esfera interior
 
 print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")

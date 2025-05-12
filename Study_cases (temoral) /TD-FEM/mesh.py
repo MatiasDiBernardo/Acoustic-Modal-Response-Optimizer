@@ -65,7 +65,7 @@ print(f"Punto receptor: {receiver_coords}")
 
 # --- 2. Cargar malla ---
 # *** Nombre de archivo de malla para f_max 400Hz ***
-mesh_filename = "mallado/sala_impulso_fmax400_v2.msh" 
+mesh_filename = "mallado/esfera_en_paralelepipedo_refined.msh" 
 print(f"\n--- Cargando malla desde: {mesh_filename} ---")
 try:
     msh, cell_tags, facet_tags = io.gmshio.read_from_msh(

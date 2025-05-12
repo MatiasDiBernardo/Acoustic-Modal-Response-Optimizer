@@ -12,6 +12,7 @@ import os
 import traceback 
 import matplotlib.pyplot as plt # Asegurarse que está importado
 
+# IMPORTANTE: Este script requiere FEniCS X Scalar (no imaginario)
 # --- 0. Definiciones Geométricas (para consistencia con Gmsh y receptor) ---
 Lx = 2.0
 Ly = 1.5
@@ -43,7 +44,6 @@ dt = 1.0 / (puntos_por_periodo_dt * f_max_resolucion_temporal) # -> 2.5e-5 s
 num_steps = int(T_final / dt)
 print(f"Número de pasos de tiempo: {num_steps} (T_final={T_final:.3f}s, dt={dt:.2e}s)")
 
-
 # Marcadores de faceta
 sphere_facet_marker = 7
 # Paredes rígidas (Neumann homogéneo implícito)
@@ -65,7 +65,7 @@ print(f"Punto receptor: {receiver_coords}")
 
 # --- 2. Cargar malla ---
 # *** Nombre de archivo de malla para f_max 400Hz ***
-mesh_filename = "mallado/sala_impulso_fmax400_v2.msh" 
+mesh_filename = "mallado/esfera_en_paralelepipedo_refined.msh" 
 print(f"\n--- Cargando malla desde: {mesh_filename} ---")
 try:
     msh, cell_tags, facet_tags = io.gmshio.read_from_msh(
@@ -287,16 +287,13 @@ frecuencias_positivas_log = shifted_frecuencia[positive_indices]
 magnitudes_positivas_log = shifted_magnitudes[positive_indices]
 
 # 3. Ploteo en escala logarítmica en el eje X
-ax2.plot(frecuencias_positivas_log, magnitudes_positivas_log)
+ax2.plot(frecuencias_positivas_log, 20* np.log10(magnitudes_positivas_log))
 ax2.set_xscale('log') # <--- ¡Aquí está el cambio clave!
 ax2.set_title('Espectro de Frecuencia (Escala Logarítmica en Frecuencia)')
 ax2.set_xlabel('Frecuencia (Hz, Escala Logarítmica)')
 ax2.set_ylabel('Magnitud')
 ax2.grid(True, which="both", ls="-") # 'which="both"' para mostrar las líneas de la cuadrícula en ambos ejes en escala logarítmica
 
-# --- Ajustar el diseño para evitar superposiciones ---
-plt.tight_layout()
-plt.show()
 # --- Ajustar el diseño para evitar superposiciones ---
 plt.tight_layout()
 plt.show()

@@ -1,6 +1,6 @@
-from dolfin import *
+from dolfinx import *
 import numpy as np
-from dolfin import Function, File
+from dolfinx import Function, File
 import matplotlib.pyplot as plt
 
 

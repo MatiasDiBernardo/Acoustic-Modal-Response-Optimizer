@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+# Primera resolución con la solución por autovalores y autovectores
+
 def example_with_visualization():
     # Estos en en centímetros
     Lx = 400       # Largo de la sala en X 

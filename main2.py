@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from FEM_source import FEM_Source_Solver
 
-freqs_eval = np.arange(20, 200, 5)
+freqs_eval = np.arange(20, 200, 2)
 mesh = "mallado/esfera_en_paralelepipedo_refined.msh"  # Crear malla con el script correspondiente
 receptor_position1 = (0.7, 0.7, 0.7)
 receptor_position2 = (0.5, 0.5, 0.7)

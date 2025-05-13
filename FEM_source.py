@@ -7,6 +7,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from dolfinx import fem, io, mesh, cpp, geometry
+from dolfinx.fem import form, Function, Constant
 from dolfinx.fem.petsc import LinearProblem, assemble_vector, apply_lifting, set_bc, assemble_matrix # Import assemble_matrix
 from dolfinx.io import VTKFile
 from ufl import (TestFunction, TrialFunction, dx, ds, grad, inner,
@@ -87,12 +88,27 @@ def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
     if not np.issubdtype(c_type, np.complexfloating) and MPI.COMM_WORLD.rank == 0:
         print("ADVERTENCIA: PETSc ScalarType no es complejo. Los resultados pueden ser incorrectos.")
     # print(f"Usando PETSc ScalarType: {c_type}")
+    
+    # Defino los puntos a evaluar en el espacio
+        receiver_coords = np.array([rec_loc[0], rec_loc[1], rec_loc[2]])
+        receiver_point_eval = np.array([receiver_coords]) # Para eval, necesita forma (1,3)
+
+        tree = geometry.bb_tree(msh, msh.topology.dim) 
+        candidate_cells_adj = geometry.compute_collisions_points(tree, receiver_point_eval.astype(np.float64))
+        receptor_cell_idx = -1
+        if candidate_cells_adj.num_nodes > 0: 
+            colliding_cells_adj = geometry.compute_colliding_cells(msh, candidate_cells_adj, receiver_point_eval.astype(np.float64))
+            if colliding_cells_adj.num_nodes > 0: 
+                cells_found_for_point_0 = colliding_cells_adj.links(0) 
+                if len(cells_found_for_point_0) > 0:
+                    receptor_cell_idx = cells_found_for_point_0[0] 
 
     # Itero en frecuencia
     magnitude = []
     PETSc.Options().clear()
     for om in omega:
         k_wave = om / c0      # Número de onda (rad/m)
+        
         # Condición de Neumann en la esfera: dp/dn = g_N
         neumann_value = -1j * om * rho0 * U_normal_sphere
         neumann_term = fem.Constant(msh, c_type(neumann_value)) # Esto es g_N
@@ -107,57 +123,41 @@ def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
 
         bcs = [] # Sin condiciones de Dirichlet
 
+        A_form = form(a_form_ufl, dtype=PETSc.ScalarType)
+        b_form = form(L_form_ufl, dtype=PETSc.ScalarType)
 
-        # Compilar formas y resolver
-        try:
-            a_form_compiled = fem.form(a_form_ufl, dtype=c_type)
-            L_form_compiled = fem.form(L_form_ufl, dtype=c_type)
+        # 2) Assemble system
+        A = assemble_matrix(A_form, bcs=bcs)
+        A.assemble()
 
-            p_solution = fem.Function(V, dtype=c_type)
-            p_solution.name = "pressure_complex_P1_Rigid" # Actualizado a P1
-            
-            # Usamos LinearProblem con solver directo LU/MUMPS
-            problem = LinearProblem(a_form_compiled, L_form_compiled, bcs=bcs, u=p_solution,
-                                    petsc_options={"ksp_type": "preonly", "pc_type": "lu", 
-                                                "pc_factor_mat_solver_type": "mumps"})
-            
-            problem.solve()
-
-        except RuntimeError as e:
-            if "singular" in str(e).lower() or "zero pivot" in str(e).lower():
-                print("\nERROR DE RUNTIME: La matriz del sistema es probablemente singular.")
-                print("Esto es común en problemas de Helmholtz con Neumann puro.")
-                print("Considera usar un solver iterativo o fijar la presión en un punto.")
-            elif "PETSC_DIR" in str(e) or "PETSC_ARCH" in str(e) or "MPI" in str(e):
-                print("ERROR DE RUNTIME: Problema con PETSc/MPI.")
-            elif "UMFPACK" in str(e) or "MUMPS" in str(e):
-                print("ERROR DE RUNTIME: Problema con el solver directo (UMFPACK/MUMPS).")
-            print(f"Detalles del error: {e}")
-            traceback.print_exc()
-            exit()
-        except Exception as e:
-            print(f"ERROR inesperado durante la compilación o solución: {e}")
-            traceback.print_exc()
-            exit()
-
+        b = assemble_vector(b_form)
+        for bc in bcs:
+            bc.apply(b)
         
-        # Para evaluar el resultado en el punto específicado
+        x_petsc = A.createVecLeft()       # this is a petsc4py.PETSc.Vec
 
-        receiver_coords = np.array([rec_loc[0], rec_loc[1], rec_loc[2]])
-        receiver_point_eval = np.array([receiver_coords]) # Para eval, necesita forma (1,3)
+        # 3) Build your custom KSP/PC
+        ksp = PETSc.KSP().create(msh.comm)
+        ksp.setOperators(A)
+        ksp.setType("preonly")
+        pc = ksp.getPC()
+        pc.setType("lu")
+        pc.setFactorSolverType("mumps")
 
-        tree = geometry.bb_tree(msh, msh.topology.dim) 
-        candidate_cells_adj = geometry.compute_collisions_points(tree, receiver_point_eval.astype(np.float64))
-        receptor_cell_idx = -1
-        if candidate_cells_adj.num_nodes > 0: 
-            colliding_cells_adj = geometry.compute_colliding_cells(msh, candidate_cells_adj, receiver_point_eval.astype(np.float64))
-            if colliding_cells_adj.num_nodes > 0: 
-                cells_found_for_point_0 = colliding_cells_adj.links(0) 
-                if len(cells_found_for_point_0) > 0:
-                    receptor_cell_idx = cells_found_for_point_0[0] 
+        # 4) Solve into x_petsc
+        ksp.solve(b, x_petsc)
 
+        # 5) Copy the data back into your Function
+        p_solution = Function(V, dtype=PETSc.ScalarType)
+        # DOLFINx Vector (p_solution.x) has an .array property you can overwrite:
+        p_solution.x.array[:] = x_petsc.getArray()
+
+        # Guarda el resultado en los puntos del espacio elegidos
         if receptor_cell_idx != -1:
             print(f"Punto receptor encontrado en la celda local {receptor_cell_idx} en el proceso {msh.comm.rank}")
+            print(solucion_compleja)
+            solucion_compleja = p_solution.eval(receiver_point_eval, [receptor_cell_idx])
+            magnitude.append(np.abs(solucion_compleja))
         else:
             if msh.comm.size > 1:
                 _found_locally = 1 if receptor_cell_idx != -1 else 0 
@@ -166,10 +166,5 @@ def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
                     print(f"ADVERTENCIA: Punto receptor {receiver_coords} no encontrado en ninguna celda en ningún proceso.")
             elif msh.comm.rank == 0 : # Serial y no encontrado
                 print(f"ADVERTENCIA: Punto receptor {receiver_coords} no encontrado en ninguna celda.")
-
-        if  receptor_cell_idx != -1:
-            solucion_compleja = p_solution.eval(receiver_point_eval, [receptor_cell_idx])
-            print(solucion_compleja)
-            magnitude.append(np.abs(solucion_compleja))
     
     return np.array(magnitude)

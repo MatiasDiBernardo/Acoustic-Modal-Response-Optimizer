@@ -3,3 +3,4 @@ pygame
 meshio
 h5py
 pyvista
+pyvistaqt

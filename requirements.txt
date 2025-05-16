@@ -1,10 +1,6 @@
 pygame
 meshio
 h5py
-<<<<<<< HEAD
-pyvista
-pyvistaqt
-=======
 gmsh
 pyvista
->>>>>>> 8f8da42c7b015e98522527d67574bf0e250b95a1
+pyvistaqt

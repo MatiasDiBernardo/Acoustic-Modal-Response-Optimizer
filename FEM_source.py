@@ -36,7 +36,7 @@ def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
     # Amplitud de la velocidad normal en la superficie de la esfera interna (m/s)
     U_normal_sphere = 0.01 # Ejemplo: 1 cm/s
 
-    # Marcadores de faceta (esto es la medida de la esfera??)
+    # Con esto sabe donde esta la esfera
     sphere_facet_marker = 7
 
     # Cargar malla (.msh)
@@ -185,7 +185,7 @@ def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc):
         rec_loc (tuple[float]): Tuple with (X, Y, Z) location of the receptor
 
     Returns:
-        np.array: Magnitude of the pressure
+        np.array: Magnitude of the pressure in dB
     """
 
     # Parámetros físicos y de la simulación
@@ -332,4 +332,4 @@ def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc):
             val = np.abs(solucion_compleja)
             magnitude_matriz[j, i] = val
         
-    return magnitude_matriz
+    return 20 * np.log10(magnitude_matriz)

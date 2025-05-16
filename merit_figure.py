@@ -15,3 +15,13 @@ def modal_response_merit(modal_response):
     return np.std(distance_between_modes)
 
 # También tiene que haber una figura de merito sobre la simulación con esfera pulsante (y diferentes posiciones de a sala)
+def merit_spatial_deviation(response_matrix):
+    # Validar numpy imp vs la formula
+    std_per_column = np.std(response_matrix, axis=0, ddof=1)
+    return np.mean(std_per_column)
+
+def merit_magnitude_deviation(response_matrix):
+    # Validar numpy imp vs la formula
+    std_per_row = np.std(response_matrix, axis=1, ddof=1)
+    return np.mean(std_per_row)
+

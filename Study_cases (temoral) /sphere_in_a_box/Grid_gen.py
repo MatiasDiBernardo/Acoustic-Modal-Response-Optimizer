@@ -10,17 +10,28 @@ gmsh.model.add("pulsating_sphere_very_small_refined") # Nombre actualizado
 output_directory = "mallado"
 os.makedirs(output_directory, exist_ok=True)
 
+#Se define la frecuencia maxima de analisis, la cual va determinar la resolucion de la malla 
+f_max = 400
+c = 343
+landa_max = c/f_max
+
+
 # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
 # Paralelepípedo (dominio pequeño)
 Lx = 2.0
-Ly = 1.5
-Lz = 1.0
+Ly = 2.0
+Lz = 2.0
 
 # Fuente esférica
 x_esfera = 0.3
 y_esfera = 0.3
 z_esfera = 0.3
-r_esfera = 0.25 # Radio de la esfera interior
+r_esfera = landa_max/10 # Radio de la esfera interior
+
+#Se definen las dimensiones maximas y minimas de los elementos
+# *** CAMBIO: Tamaños de malla refinados ***
+min_lc = r_esfera / 10
+max_lc = landa_max / 10 # 
 
 print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")
 print(f"Esfera: Centro=({x_esfera},{y_esfera},{z_esfera}), Radio={r_esfera}")
@@ -204,9 +215,7 @@ print(f"Grupo Físico de Volumen 'dominio_volumetrico' (Tag Físico: {volumen_ph
 # --- Configuración y Generación de Malla ---
 gmsh.option.setNumber("Mesh.Algorithm3D", 4) # Netgen
 
-# *** CAMBIO: Tamaños de malla refinados ***
-min_lc = 0.025 # r_esfera / 10
-max_lc = 0.125 # 
+
 
 gmsh.option.setNumber("Mesh.CharacteristicLengthMin", min_lc)
 gmsh.option.setNumber("Mesh.CharacteristicLengthMax", max_lc)
@@ -230,7 +239,7 @@ gmsh.write(mesh_output_filename)
 print("Malla guardada.")
 
 # Descomenta si quieres ver la malla antes de salir
-# gmsh.fltk.run() 
+gmsh.fltk.run() 
 
 gmsh.finalize()
 print("Gmsh finalizado.")

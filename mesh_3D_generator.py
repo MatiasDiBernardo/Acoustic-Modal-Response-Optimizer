@@ -1,7 +1,8 @@
 import os # Importado para crear el directorio de salida
+import pygmsh
 import gmsh
-import numpy as np
 import meshio 
+import sys
 
 def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     """Generate the mesh in a room.msh file that can be loaded by FEniCS
@@ -14,7 +15,6 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     """
     gmsh.initialize()
     gmsh.model.add("pulsating_sphere_very_small_refined") # Nombre actualizado
-
 
     # Crear directorio de salida si no existe
     output_directory = "mallado"
@@ -41,18 +41,12 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     max_lc = landa_max / cte_f # 
 
 
-    print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")
-    print(f"Esfera: Centro=({x_esfera},{y_esfera},{z_esfera}), Radio={r_esfera}")
-    print(f"Esfera: Centro=({x_esfera},{y_esfera},{z_esfera}), Radio={r_esfera}")
-
-
     dimensiones = [Lx, Ly, Lz]
     #Verificamos que la esfera no intercecte con las superficies de borde
     for i in range(len(source_position)):
         if source_position[i] + r_esfera >= dimensiones[i] or source_position[i] - r_esfera < 0:
             print("ERROR: La esfera esta fuera de dominio, redefina la ubicacion")
             return 
-
 
     # Primero se busca generar un sólido que representa el medio, el dominio desde el punto de vista matemático
     # Creamos la esfera
@@ -71,7 +65,6 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
         sys.exit()
         
     gmsh.model.occ.synchronize() # Hasta ahora tenemos un volumen, y las superficies de las paredes y esfera
-
 
     # --- Ahora hay que etiquetar los grupos físicos: Volumen, y superficies ---
     if not dominio:
@@ -250,7 +243,7 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     print("Malla generada.")
 
     # *** CAMBIO: Nombre de archivo para malla refinada ***
-    mesh_output_filename = os.path.join(output_directory, "esfera_en_paralelepipedo_refined.msh")
+    mesh_output_filename = os.path.join(output_directory, "room.msh")
     print(f"Guardando malla en: {mesh_output_filename}")
     gmsh.write(mesh_output_filename)
     print("Malla guardada.")
@@ -260,9 +253,6 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
 
     gmsh.finalize()
     print("Gmsh finalizado.")
-
-
-    
 
 def generate_mesh_for_modal(floor_coords, Z):
     """Generate the mesh in a room.xdmf file that can be loaded by FEniCS

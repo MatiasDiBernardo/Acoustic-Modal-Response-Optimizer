@@ -196,8 +196,8 @@ def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc):
     # Amplitud de la velocidad normal en la superficie de la esfera interna (m/s)
     U_normal_sphere = 0.01 # Ejemplo: 1 cm/s
 
-    # Marcadores de faceta (esto es la medida de la esfera??)
-    sphere_facet_marker = 7
+    # Marcadores de la esfera (le puse tag 1 a la esfera)
+    sphere_facet_marker = 1
 
     # Cargar malla (.msh)
     try:

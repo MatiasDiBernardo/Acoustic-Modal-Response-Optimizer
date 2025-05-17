@@ -4,38 +4,36 @@ import gmsh
 import numpy as np
 
 gmsh.initialize()
-gmsh.model.add("pulsating_sphere_very_small_refined") # Nombre actualizado
+gmsh.model.add("room_lest_refined") # Nombre actualizado
 
 # Crear directorio de salida si no existe
 output_directory = "mallado"
 os.makedirs(output_directory, exist_ok=True)
 
 #Se define la frecuencia maxima de analisis, la cual va determinar la resolucion de la malla 
-f_max = 400
+f_max = 200
 c = 343
 landa_max = c/f_max
 
-
 # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
 # Paralelepípedo (dominio pequeño)
-Lx = 2.0
-Ly = 2.0
-Lz = 2.0
+Lx = 4.0
+Ly = 6.0
+Lz = 2.2
 
 # Fuente esférica
-x_esfera = 0.3
-y_esfera = 0.3
-z_esfera = 0.3
+x_esfera = 2.5
+y_esfera = 2.0
+z_esfera = 1.2
 r_esfera = landa_max/10 # Radio de la esfera interior
 
 #Se definen las dimensiones maximas y minimas de los elementos
 # *** CAMBIO: Tamaños de malla refinados ***
-min_lc = r_esfera / 10
-max_lc = landa_max / 10 # 
+min_lc = r_esfera / 10   
+max_lc = landa_max / 10  
 
 print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")
 print(f"Esfera: Centro=({x_esfera},{y_esfera},{z_esfera}), Radio={r_esfera}")
-
 
 # Primero se busca generar un sólido que representa el medio, el dominio desde el punto de vista matemático
 # Creamos la esfera
@@ -233,7 +231,7 @@ gmsh.model.mesh.generate(3)
 print("Malla generada.")
 
 # *** CAMBIO: Nombre de archivo para malla refinada ***
-mesh_output_filename = os.path.join(output_directory, "esfera_en_paralelepipedo_refined.msh")
+mesh_output_filename = os.path.join(output_directory, "room_max200.msh")
 print(f"Guardando malla en: {mesh_output_filename}")
 gmsh.write(mesh_output_filename)
 print("Malla guardada.")

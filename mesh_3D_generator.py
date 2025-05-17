@@ -26,7 +26,7 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
 
     #Constante de superacion: Bajar si toma demasiado tiempo, subir si falta definicion
     cte_f = 10 #Cuantos elememtos definimos que entren en landa mas chico Lanxa_max
-    cte_r = 6 #Cuantos elementos definimos que entren en el radio de la esfera
+    cte_r = 1 #Cuantos elementos definimos que entren en el radio de la esfera
 
     # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
     Lx, Ly = floor_coords

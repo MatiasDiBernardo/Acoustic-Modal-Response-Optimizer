@@ -176,7 +176,7 @@ def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
     
     return np.array(magnitude)
 
-def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc):
+def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc, space_points):
     """Solver the Hemholtz equation for given room geometry
 
     Args:
@@ -250,7 +250,6 @@ def FEM_Source_Solver_Spatial_Average(frequency, mesh_filename, rec_loc):
         print("ADVERTENCIA: PETSc ScalarType no es complejo. Los resultados pueden ser incorrectos.")
     
     # Defino los puntos a evaluar en el espacio
-    space_points = 6
     receiver_coords = np.array([rec_loc[0], rec_loc[1], rec_loc[2]])
     receiver_coords = np.array(rec_loc, dtype=np.float64).reshape(3,)
 

@@ -17,15 +17,15 @@ landa_max = c/f_max
 
 # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
 # Paralelepípedo (dominio pequeño)
-Lx = 4.0
-Ly = 6.0
+Lx = 3.0
+Ly = 4.0
 Lz = 2.2
 
 # Fuente esférica
-x_esfera = 2.5
-y_esfera = 2.0
+x_esfera = 1.0
+y_esfera = 1.5
 z_esfera = 1.2
-r_esfera = landa_max/10 # Radio de la esfera interior
+r_esfera = 0.1 # Radio de la esfera interior
 
 #Se definen las dimensiones maximas y minimas de los elementos
 # *** CAMBIO: Tamaños de malla refinados ***

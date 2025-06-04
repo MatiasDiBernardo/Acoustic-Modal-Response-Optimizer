@@ -14,14 +14,18 @@ import matplotlib.pyplot as plt # Asegurarse que está importado
 
 # IMPORTANTE: Este script requiere FEniCS X Scalar (no imaginario)
 # --- 0. Definiciones Geométricas (para consistencia con Gmsh y receptor) ---
-Lx = 2.0
-Ly = 1.5
-Lz = 1.0
+Lx = 3.0
+Ly = 4.0
+Lz = 2.2
 # Posición de la fuente (debe coincidir con el script de Gmsh)
-x_esfera_src = 0.3 
-y_esfera_src = 0.3
-z_esfera_src = 0.3
+x_esfera_src = 1.0 
+y_esfera_src = 1.5
+z_esfera_src = 1.2
 
+# Puntos receptor
+x_r = 3.0
+y_r = 2.0
+z_r = 1.8
 
 # --- 1. Parámetros físicos y de la simulación ---
 c0 = 343.0          # Velocidad del sonido (m/s)
@@ -33,12 +37,12 @@ source_width = 5e-4     # Ancho del pulso Gaussiano (s)
 source_delay = 6 * source_width # Retardo del pulso (0.003s)
 
 # Parámetros de la simulación temporal
-f_min_deseada = 50.0    # Hz, frecuencia mínima a resolver bien en FFT
+f_min_deseada = 25.0    # Hz, frecuencia mínima a resolver bien en FFT
 num_ciclos_min = 10     # Número de ciclos de f_min a capturar
 T_final = num_ciclos_min / f_min_deseada # Tiempo final de simulación (s) -> 0.2s
 
 # dt definido por f_max_resolucion_temporal
-f_max_resolucion_temporal = 2000.0 # Hz, frecuencia máxima a resolver bien por el esquema temporal
+f_max_resolucion_temporal = 500.0 # Hz, frecuencia máxima a resolver bien por el esquema temporal
 puntos_por_periodo_dt = 20.0       # Puntos por período de f_max_resolucion_temporal
 dt = 1.0 / (puntos_por_periodo_dt * f_max_resolucion_temporal) # -> 2.5e-5 s
 num_steps = int(T_final / dt)
@@ -49,7 +53,7 @@ sphere_facet_marker = 7
 # Paredes rígidas (Neumann homogéneo implícito)
 
 # Punto receptor
-receiver_coords = np.array([Lx/2, Ly/2, Lz/2])
+receiver_coords = np.array([x_r, y_r, z_r])
 receiver_point_eval = np.array([receiver_coords]) # Para eval, necesita forma (1,3)
 
 print("--- Parámetros de Simulación (TD-FEM para Respuesta al Impulso) ---")
@@ -65,7 +69,7 @@ print(f"Punto receptor: {receiver_coords}")
 
 # --- 2. Cargar malla ---
 # *** Nombre de archivo de malla para f_max 400Hz ***
-mesh_filename = "mallado/esfera_en_paralelepipedo_refined.msh" 
+mesh_filename = "mallado/room_max200.msh" 
 print(f"\n--- Cargando malla desde: {mesh_filename} ---")
 try:
     msh, cell_tags, facet_tags = io.gmshio.read_from_msh(
@@ -288,7 +292,7 @@ magnitudes_positivas_log = shifted_magnitudes[positive_indices]
 
 # 3. Ploteo en escala logarítmica en el eje X
 ax2.plot(frecuencias_positivas_log, 20* np.log10(magnitudes_positivas_log))
-ax2.set_xscale('log') # <--- ¡Aquí está el cambio clave!
+#ax2.set_xscale('log') # <--- ¡Aquí está el cambio clave!
 ax2.set_title('Espectro de Frecuencia (Escala Logarítmica en Frecuencia)')
 ax2.set_xlabel('Frecuencia (Hz, Escala Logarítmica)')
 ax2.set_ylabel('Magnitud')

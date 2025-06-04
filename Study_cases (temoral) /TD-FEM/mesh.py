@@ -13,13 +13,14 @@ import traceback
 import matplotlib.pyplot as plt
 
 # --- 0. Definiciones Geométricas (para consistencia con Gmsh y receptor) ---
-Lx = 2.0
-Ly = 1.5
-Lz = 1.0
+Lx = 3.0
+Ly = 4.0
+Lz = 2.2
 # Posición de la fuente (debe coincidir con el script de Gmsh)
-x_esfera_src = 0.3 
-y_esfera_src = 0.3
-z_esfera_src = 0.3
+x_esfera_src = 1.0 
+y_esfera_src = 1.5
+z_esfera_src = 1.2
+
 
 
 # --- 1. Parámetros físicos y de la simulación ---

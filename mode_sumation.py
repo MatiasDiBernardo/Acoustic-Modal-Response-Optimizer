@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 from FEM_source import FEM_Source_Solver_Spatial_Average, FEM_Source_Solver
+from FEM_source_time import FEM_time
 
 def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.01):
     """
@@ -147,32 +149,44 @@ def compute_modal_transfer_complete(
 L = (3.0, 4.0, 2.2)          # Room dimensions [m]
 rs = [1.0, 1.5, 1.2]        # Source position [m]
 rr = [3.0, 2.0, 1.8]        # Receiver position [m]
-freqs = np.arange(20, 200, 1)
-
-# Modal Sum
-rta = compute_modal_transfer(rs, rr, L, freqs)
-
-# FEM
+freqs = np.arange(20, 200, 2)
 mesh = "mallado/room_max200.msh"  # Crear malla con el script correspondiente
+
+# Modal Sum (resolución analítica sumando auto funciones)
+rta = compute_modal_transfer(rs, rr, L, freqs)
+rta -= rta[0]
+
+# FEM Source común (Calculo por frecuencia de la ecuación de Hemholtz)
+time_start = time.time()
 res_fem = FEM_Source_Solver(freqs, mesh, rr)
+res_fem = 20 * np.log10(np.abs(res_fem))
+res_fem -= res_fem[0]
+time_end = time.time() - time_start
+
+# FEM Source Promediado (calcula varios puntos en el espacio para dar la solución)
 #space_average = 6  # El agregar promediado espacial casi no afecta la preformance
 # res_base = FEM_Source_Solver_Spatial_Average(freqs, mesh, rr, space_average)
-
-# Plot the magnitude of the transfer function
 # amp_dif = res_base[0][0] - rta[0]
 # rta += amp_dif
 
-# Normalizo el inicio de las dos respuestas
-rta -= rta[0]
-res_fem = 20 * np.log10(np.abs(res_fem))
-res_fem -= res_fem[0]
+# FEM Time (Simula en tiempo una respuesta al impulso y calcula RIR)
+# freqs_fem, res_fem = FEM_time(mesh, rr)
+# res_fem = 20 * np.log10(res_fem)
+# res_fem -= res_fem[0]
+
+# Resultados guardades de simulación por Tiempo
+fem_time = np.load("mallado/mag_plot.npy")
+freqs_fem = np.load("mallado/freqs_fem.npy")
 
 plt.figure()
 plt.plot(freqs, rta, label="Modal Summation")
-#plt.plot(freqs, res_base[0], label="FEM")
-plt.plot(freqs, res_fem, label="FEM")
+#plt.plot(freqs, res_base[0], label="FEM Promediado")
+plt.plot(freqs, res_fem, label="FEM Source")
+plt.plot(freqs_fem, fem_time, label="FEM Time")
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Magnitude (dB)')
 plt.legend()
 plt.grid(True)
 plt.show()
+
+print("El tiempo que tardo en procesar fue: ", time_end)

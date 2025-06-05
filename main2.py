@@ -5,32 +5,35 @@ import time
 from FEM_source import FEM_Source_Solver, FEM_Source_Solver_Spatial_Average
 
 # Solución sin adaptar grilla
-freqs_eval = np.arange(20, 200, 1)
+res = 2
+freqs_eval = np.arange(20, 200, res)
 
 mesh = "mallado/room_max200.msh"  # Crear malla con el script correspondiente
 space_average = 6  # El agregar promediado espacial casi no afecta la preformance
 
-receptor_position1 = (2, 4, 1.2)
+receptor_position1 = (3.0, 2.0, 1.8)
 
 time_base = time.time()
 res_base = FEM_Source_Solver_Spatial_Average(freqs_eval, mesh, receptor_position1, space_average)
+res_base_prom = np.sum(res_base, axis=0)
 t1 = time.time()
 time1 = t1 - time_base
 
 # Solución adaptando grilla
-f1 = np.arange(20, 80, 1)
+f1 = np.arange(20, 80, res)
 mesh1 =  "mallado/room_max80.msh"
 res1 = FEM_Source_Solver_Spatial_Average(f1, mesh1, receptor_position1, space_average)
 
-f2 = np.arange(80, 140, 1)
+f2 = np.arange(80, 140, res)
 mesh2 =  "mallado/room_max140.msh"
 res2 = FEM_Source_Solver_Spatial_Average(f2, mesh2, receptor_position1, space_average)
 
-f3 = np.arange(140, 200, 1)
+f3 = np.arange(140, 200, res)
 mesh3 =  "mallado/room_max200.msh"
 res3 = FEM_Source_Solver_Spatial_Average(f3, mesh3, receptor_position1, space_average)
 
 res_tot = np.hstack([res1, res2, res3])
+res_tot_prom = np.sum(res_tot, axis=0)
 f_tot =  np.hstack([f1, f2, f3])
 
 t2 = time.time()
@@ -40,8 +43,8 @@ print("El tiempo de cada ejecución fue: ")
 print("Tiempo normal: ", time1)
 print("Tiempo grilla adapt: ", time2)
 
-plt.plot(freqs_eval, res_base[0], label="Base")
-plt.plot(f_tot, res_tot[0], label="Adapt")
+plt.plot(freqs_eval, res_base_prom,'x-', label="Base")
+plt.plot(f_tot, res_tot_prom, 'o-' ,label ="Adapt")
 plt.legend()
 # plt.plot(freqs_eval, res1[1])
 # plt.plot(freqs_eval, res1[2])

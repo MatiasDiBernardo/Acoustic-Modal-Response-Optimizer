@@ -117,7 +117,13 @@ def visualization_of_geometry():
     # Clean up and exit
     pygame.quit()
     sys.exit()
-    
+
+def calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz):
+    dx_random = np.random.uniform(Lx - Dx, Lx)
+    dy_random = np.random.uniform(Ly - Dy, Ly)
+    dz_random = np.random.uniform(Lz - Dz, Lz)
+
+    return (dx_random, dy_random, dz_random)
 
 def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
     """Genera puntos de posibles geometrías de control room.

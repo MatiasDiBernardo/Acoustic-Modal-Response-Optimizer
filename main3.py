@@ -1,23 +1,11 @@
-from geometry_generator import calculation_of_geometry
+from geometry_generator import calculation_of_geometry, calculation_of_geometry_simple
 from mesh_3D_generator import generate_mesh_parallelepiped
-from FEM_source import FEM_Source_Solver_Spatial_Average
+from mesh_3D_simple import create_simple_mesh
+from FEM_source import FEM_Source_Solver_Average
 from merit_figure import merit_spatial_deviation, merit_magnitude_deviation
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-# freqs_eval = np.arange(20, 200, 2)
-# mesh = "mallado/esfera_en_paralelepipedo_refined.msh"  # Crear malla con el script correspondiente
-# receptor_position1 = (0.7, 0.7, 0.7)
-
-# res1 = FEM_Source_Solver_Spatial_Average(freqs_eval, mesh, receptor_position1)
-
-
-# sv_merit = merit_spatial_deviation(res1)
-# md_merit = merit_magnitude_deviation(res1)
-
-# print("Mértio espacial: ", sv_merit)
-# print("Mértio magnitud: ", md_merit)
 
 # Optimización con el solver por fuente
 def example_optim():
@@ -35,13 +23,13 @@ def example_optim():
 
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 100        # Cantidad de salas a generar
+    M = 50        # Cantidad de salas a generar
     n_walls = 4    # Número de cortes en las paredes
     freqs_eval = np.arange(20, 200, 2)  # Frecuencias a evaluar
     
     # Almacenar toda la data
     rooms = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
-    mesh = "room_complex.msh"  # Crear malla con el script correspondiente
+    mesh = "room_mesh.msh"  # Crear malla con el script correspondiente
     mag_responses = []
     merit_sv_values = []
     merit_md_values = []
@@ -52,9 +40,9 @@ def example_optim():
 
         # Crea la malla de la geometría selecionada
         #mesh_generator_complex(rooms[i], Z, source_position)
-
+        
         # Evalua la rta en frecuencia para esa sala
-        mag = FEM_Source_Solver_Spatial_Average(freqs_eval, mesh, receptor_position)
+        mag = FEM_Source_Solver_Average(freqs_eval, mesh, receptor_position)
 
         # Calcula figuras de mérito
         sv_merit = merit_spatial_deviation(mag)
@@ -63,7 +51,6 @@ def example_optim():
         merit_sv_values.append(sv_merit)
         merit_md_values.append(md_merit)
         mag_responses.append(mag)
-
     
     merit_sv_values = np.array(merit_sv_values)
     merit_md_values = np.array(merit_md_values)
@@ -91,42 +78,40 @@ def example_optim():
     plt.grid()
     plt.show()
 
-def optim_easy():
-    # Dimensiones sala (en metros)
-    Lx = 4       # Largo de la sala en X 
-    Ly = 6       # Largo de la sala en Y
-    Lz = 2.2     # Alto de la sala
-    Dx = 0.8     # Delta X
-    Dy = 1       # Delta Y
+def example_optim_simple():
+    # Dimensiones sala (en centímetros)
+    Lx = 2.5 
+    Ly = 3 
+    Lz = 2.2       
+    Dx = 0.5        
+    Dy = 0.8       
+    Dz = 0.1       
     
     # Posiciones fuente y receptor (en metros)
-    source_position = (2.5, 2, 1.2)
-    
-    receptor_position = (2, 3.5, 1.2)
+    source_position = (1.9, 1.0, 1.3)
+    receptor_position = (1.25, 1.9, 1.2)
 
     # Parametros de control
-    N = 250        # Densidad de la grilla del generador de geometrías
-    M = 100        # Cantidad de salas a generar
-    fmax = 200
-    freqs_eval = np.arange(20, fmax, 2)  # Frecuencias a evaluar
+    M = 50        # Cantidad de salas a generar
+    freqs_eval = np.arange(20, 200, 2)  # Frecuencias a evaluar
     
     # Almacenar toda la data
-    mesh = "mallado/room.msh"  # Crear malla con el script correspondiente
+    mesh = "mallado/room_simple.msh"  # Crear malla con el script correspondiente
+
+    rooms = []
     mag_responses = []
     merit_sv_values = []
     merit_md_values = []
-    rooms = []
     
     for i in range(M):
         print("Vamos por el room: ", i)
-        x = Lx - np.random.uniform(0, Dx)
-        y = Ly - np.random.uniform(0, Dy)
 
-        generate_mesh_parallelepiped((x, y), Lz, source_position, fmax)
-        rooms.append((x,y))
+        # Simple version
+        Lx_new, Ly_new, Lz_new = calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz)
+        create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position)
 
         # Evalua la rta en frecuencia para esa sala
-        mag = FEM_Source_Solver_Spatial_Average(freqs_eval, mesh, receptor_position)
+        mag = FEM_Source_Solver_Average(freqs_eval, mesh, receptor_position)
 
         # Calcula figuras de mérito
         sv_merit = merit_spatial_deviation(mag)
@@ -135,7 +120,7 @@ def optim_easy():
         merit_sv_values.append(sv_merit)
         merit_md_values.append(md_merit)
         mag_responses.append(mag)
-
+        rooms.append((Lx, Ly, Lz))
     
     merit_sv_values = np.array(merit_sv_values)
     merit_md_values = np.array(merit_md_values)
@@ -163,4 +148,4 @@ def optim_easy():
     plt.grid()
     plt.show()
 
-optim_easy()
+example_optim_simple()

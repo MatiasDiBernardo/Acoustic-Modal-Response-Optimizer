@@ -346,7 +346,7 @@ def from_position_to_grid(pos, dx):
              ]
     return new_pos
 
-def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc):
+def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False):
     """Solver the Hemholtz equation for given room geometry
 
     Args:
@@ -438,8 +438,9 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc):
                     idx_list.append(receptor_cell_idx)
     
     assert len(pos_list) == len(idx_list), "Un elemento de la grilla de puntos espaciales no se le pudo asignar malla"
-    print("La lista de posiciones es: ", pos_list)
-    print("La lista de indices es: ", idx_list)
+    if verbose:
+        print("La lista de posiciones es: ", pos_list)
+        print("La lista de indices es: ", idx_list)
 
     # Itero en frecuencia
 
@@ -495,7 +496,6 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc):
         for j in range(space_points):
             # Guarda el resultado en los puntos del espacio elegidos
             if receptor_cell_idx != -1:
-                print(f"Punto receptor encontrado en la celda local {receptor_cell_idx} en el proceso {msh.comm.rank}")
                 solucion_compleja = p_solution.eval(np.array(pos_list[j]), [idx_list[j]])
                 magnitude_matriz[j, i] = np.abs(solucion_compleja)
             else:

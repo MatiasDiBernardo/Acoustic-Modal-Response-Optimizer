@@ -3,7 +3,17 @@ import os # Importado para crear el directorio de salida
 import gmsh
 import numpy as np
 
-def create_simple_mesh(Lx, Ly, Lz, source_pos):
+def create_simple_mesh(Lx, Ly, Lz, source_pos, f_max, name):
+    """Crea una malla para una geometría simple.
+
+    Args:
+        Lx (int): Ancho en metros
+        Ly (int): Largo en metros
+        Lz (int): Altura en metros
+        source_pos (tuple(x, y, z)): Posicion de la fuente
+        f_max (float): Frecuencia máxima
+        name (string): Nombre del archivo
+    """
     gmsh.initialize()
     gmsh.model.add("room_lest_refined") # Nombre actualizado
 
@@ -12,7 +22,6 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
     os.makedirs(output_directory, exist_ok=True)
 
     #Se define la frecuencia maxima de analisis, la cual va determinar la resolucion de la malla 
-    f_max = 200
     c = 343
     landa_max = c/f_max
 
@@ -30,9 +39,6 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
     # *** CAMBIO: Tamaños de malla refinados ***
     min_lc = r_esfera / 10   
     max_lc = landa_max / 10  
-
-    print(f"Dominio: Lx={Lx}, Ly={Ly}, Lz={Lz}")
-    print(f"Esfera: Centro=({x_esfera},{y_esfera},{z_esfera}), Radio={r_esfera}")
 
     # Primero se busca generar un sólido que representa el medio, el dominio desde el punto de vista matemático
     # Creamos la esfera
@@ -60,12 +66,9 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
         sys.exit()
         
     volume_tag = dominio[0][1] # Extrae el tag numérico del volumen
-    print(f"Se guardó el volumen como {volume_tag}")
 
     # Obtener los límites (superficies) del volumen resultante
     contornos = gmsh.model.getBoundary(dominio, combined=False, oriented=False, recursive=False)
-    print(f"Límites encontrados para el volumen {volume_tag}: {contornos}")
-
 
     # Inicializamos las paredes asumiendo que:
     # X+ -> dirección frontal
@@ -95,9 +98,6 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
             print("ERROR FATAL: No se encontraron superficies límite.")
             gmsh.finalize()
             sys.exit()
-    else:
-        print("INFO: Se encontraron las 7 superficies esperadas.")
-
 
     # Obtener bounding box para todas las superficies encontradas
     bbox_list = [None] * len(surface_tags)
@@ -108,10 +108,9 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
             print(f"ERROR obteniendo BBox para tag {surface_tags[i_idx]}: {e_bbox}")
             bbox_list[i_idx] = [0]*6 # Poner un valor por defecto para evitar errores posteriores
 
-
     # Ya tenemos las bounding boxes, ahora identificamos cada superficie
     epsilon = 1e-5 # Tolerancia para la planitud de las caras
-    print("\n--- Identificación de Superficies ---")
+
     for i_idx in range(len(bbox_list)): 
         current_surface_tag = surface_tags[i_idx]
         current_bb = bbox_list[i_idx] 
@@ -166,13 +165,6 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
                     print(f"  ADVERTENCIA: Tag {current_surface_tag} parece ser otra fuente, pero 'fuente' ya estaba asignada a {tags_superficies_nombradas['fuente']}.")
 
 
-    print("\n--- Tags de Superficies Identificadas (Resultado Final) ---")
-    for nombre, tag_id in tags_superficies_nombradas.items():
-        if tag_id != -1:
-            print(f"Superficie '{nombre}': tag geométrico {tag_id}")
-        else:
-            print(f"Superficie '{nombre}': NO IDENTIFICADA (tag geométrico {tag_id})")
-
     # --- Asignar Grupos Físicos ---
     physical_tags_map = {
         "superior": 1,
@@ -185,16 +177,12 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
     }
     volumen_phys_tag = 100
 
-    print("\n--- Asignando Grupos Físicos ---")
     missing_surfaces = False
     for nombre_superficie, geom_tag_superficie in tags_superficies_nombradas.items():
         if geom_tag_superficie != -1:
             if nombre_superficie in physical_tags_map:
                 phys_tag_para_esta_superficie = physical_tags_map[nombre_superficie]
                 gmsh.model.addPhysicalGroup(2, [geom_tag_superficie], name=nombre_superficie, tag=phys_tag_para_esta_superficie)
-                print(f"Grupo Físico de Superficie '{nombre_superficie}' (Tag Físico: {phys_tag_para_esta_superficie}) asignado a la entidad geométrica {geom_tag_superficie}.")
-            else:
-                print(f"ADVERTENCIA: La superficie '{nombre_superficie}' ({geom_tag_superficie}) fue identificada pero no tiene un tag físico predefinido en 'physical_tags_map'.")
         else:
             print(f"ERROR CRÍTICO: No se pudo identificar la superficie geométrica para '{nombre_superficie}', no se creará Grupo Físico.")
             missing_surfaces = True
@@ -206,34 +194,20 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos):
 
 
     gmsh.model.addPhysicalGroup(3, [volume_tag], name="dominio_volumetrico", tag=volumen_phys_tag)
-    print(f"Grupo Físico de Volumen 'dominio_volumetrico' (Tag Físico: {volumen_phys_tag}) asignado a la entidad geométrica {volume_tag}.")
-
 
     # --- Configuración y Generación de Malla ---
     gmsh.option.setNumber("Mesh.Algorithm3D", 4) # Netgen
 
     gmsh.option.setNumber("Mesh.CharacteristicLengthMin", min_lc)
     gmsh.option.setNumber("Mesh.CharacteristicLengthMax", max_lc)
-    print(f"Tamaño característico de malla: Min={min_lc}, Max={max_lc}")
 
     # Mantenemos orden 2 para la geometría de la esfera
     gmsh.model.mesh.setOrder(2)
-    print("Establecido orden de la malla a 2 (elementos cuadráticos).")
-
     gmsh.option.setNumber("Mesh.MshFileVersion", 4.1)
-    print("Establecida versión del archivo MSH a 4.1")
 
-    print("Generando malla 3D de segundo orden...")
     gmsh.model.mesh.generate(3)
-    print("Malla generada.")
 
-    # *** CAMBIO: Nombre de archivo para malla refinada ***
-    mesh_output_filename = os.path.join(output_directory, "room_simple.msh")
-    print(f"Guardando malla en: {mesh_output_filename}")
+    mesh_output_filename = os.path.join(output_directory, f"{name}.msh")
     gmsh.write(mesh_output_filename)
-    print("Malla guardada.")
-
-    # Descomenta si quieres ver la malla antes de salir
-    #gmsh.fltk.run() 
 
     gmsh.finalize()

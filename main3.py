@@ -92,7 +92,7 @@ def example_optim_simple():
     receptor_position = (1.25, 1.9, 1.2)
 
     # Parametros de control
-    M = 50        # Cantidad de salas a generar
+    M = 200        # Cantidad de salas a generar
     freqs_eval = np.arange(20, 200, 2)  # Frecuencias a evaluar
     
     # Almacenar toda la data
@@ -119,8 +119,9 @@ def example_optim_simple():
         
         merit_sv_values.append(sv_merit)
         merit_md_values.append(md_merit)
-        mag_responses.append(mag)
-        rooms.append((Lx, Ly, Lz))
+        mag_avg = np.sum(mag, axis=0)/7
+        mag_responses.append(mag_avg)
+        rooms.append((Lx_new, Ly_new, Lz_new))
     
     merit_sv_values = np.array(merit_sv_values)
     merit_md_values = np.array(merit_md_values)
@@ -140,12 +141,10 @@ def example_optim_simple():
     plt.plot(freqs_eval, mag_responses[idx_best_room], label="Best Modal Dist")
     plt.plot(freqs_eval, mag_responses[idx_worst_room], label="Worst Modal Dist")
     plt.plot(freqs_eval, mag_responses[np.random.randint(0, M - 1)], label="Random Modal Dist")
-
-    plt.xlabel("Frequency")
-    plt.xscale('log')
-    plt.ylabel("Modal Amplitude")
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Magnitude (dB)')
     plt.legend()
-    plt.grid()
+    plt.grid(True)
     plt.show()
 
 example_optim_simple()

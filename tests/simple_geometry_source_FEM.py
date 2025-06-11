@@ -2,10 +2,10 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from geometry_generator import calculation_of_geometry_simple
-from mesh_3D_simple import create_simple_mesh
-from FEM_source import FEM_Source_Solver_Average
-from merit_figure import merit_spatial_deviation, merit_magnitude_deviation
+from room.geometry_generator import calculation_of_geometry_simple
+from mesh.mesh_3D_simple import create_simple_mesh
+from FEM.FEM_source import FEM_Source_Solver_Average
+from aux.merit_figure import merit_spatial_deviation, merit_magnitude_deviation
 
 import numpy as np
 import matplotlib.pyplot as plt

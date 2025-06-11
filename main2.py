@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-from FEM_source import FEM_Source_Solver, FEM_Source_Solver_Average
+from FEM.FEM_source import FEM_Source_Solver, FEM_Source_Solver_Average
 
 res = 1  # Resolución del salto de frecuencias
 freqs_eval = np.arange(20, 200, res)

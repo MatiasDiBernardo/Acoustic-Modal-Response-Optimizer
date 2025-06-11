@@ -1,6 +1,6 @@
 import sys
 import pygame
-from geometry import WallsGenerator
+from room.geometry import WallsGenerator
 import numpy as np
 
 def grid_random_sampler(points_grid, ammount_of_walls):

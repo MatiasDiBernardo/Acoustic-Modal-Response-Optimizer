@@ -1,8 +1,8 @@
-from geometry_generator import calculation_of_geometry
-from mesh_3D_generator import generate_mesh
-from FEM_eigensolver import FEM_solver, FEM_solver_display
-from FEM_visualization import mode_shape_visulization
-from merit_figure import modal_response_merit
+from room.geometry_generator import calculation_of_geometry
+from mesh.mesh_3D_generator import generate_mesh
+from FEM.FEM_eigensolver import FEM_solver, FEM_solver_display
+from FEM.FEM_visualization import mode_shape_visulization
+from aux.merit_figure import modal_response_merit
 
 import numpy as np
 import matplotlib.pyplot as plt

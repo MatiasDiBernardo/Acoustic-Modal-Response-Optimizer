@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from FEM_source import FEM_Source_Solver_Average, FEM_Source_Solver
-from FEM_source_time import FEM_time
+from FEM.FEM_source import FEM_Source_Solver_Average, FEM_Source_Solver
+from FEM.FEM_source_time import FEM_time
 
 def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.01):
     """

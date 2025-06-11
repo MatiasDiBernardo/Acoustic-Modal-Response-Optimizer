@@ -18,7 +18,6 @@ def example_optim():
     
     # Posiciones fuente y receptor (en metros)
     source_position = (2.5, 2, 1.2)
-    
     receptor_position = (2, 3.5, 1.2)
 
     # Parametros de control

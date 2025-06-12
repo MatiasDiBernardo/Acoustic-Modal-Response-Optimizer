@@ -34,7 +34,7 @@ def example_optim():
     
     # Almacenar toda la data
     rooms = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
-    mesh = "room_mesh_complex.msh"  # Crear malla con el script correspondiente
+    mesh = "room_mesh_complex"  # Crear malla con el script correspondiente
     mag_responses = []
     merit_sv_values = []
     merit_md_values = []

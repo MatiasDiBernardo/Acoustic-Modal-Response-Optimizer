@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from FEM.FEM_source import FEM_Source_Solver_Average, FEM_Source_Solver
-from FEM.FEM_source_time import FEM_time
 
 def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.01):
     """
@@ -144,7 +142,7 @@ def compute_modal_transfer_complete(
 
     rta_db = 20 * np.log10(np.abs(H_modal))
     return rta_db
-
+'''''
 # Parametros
 L = (3.0, 4.0, 2.2)          # Room dimensions [m]
 rs = [1.0, 1.5, 1.2]        # Source position [m]
@@ -187,3 +185,4 @@ plt.ylabel('Magnitude (dB)')
 plt.legend()
 plt.grid(True)
 plt.show()
+'''

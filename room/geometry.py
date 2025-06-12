@@ -245,6 +245,11 @@ class WallsGenerator():
             if self.interior_rect.clipline(walls[i], walls[i + 1]):
                 valid_geometry = False
                 self.score = 0
+            
+            # Avoid duplicates points
+            if walls[i] == walls[i + 1]:
+                valid_geometry = False
+                self.score = 0
 
         return valid_geometry
     

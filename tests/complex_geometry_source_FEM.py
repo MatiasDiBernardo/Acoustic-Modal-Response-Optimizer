@@ -2,12 +2,14 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from room.geometry_generator import calculation_of_geometry
 from mesh.mesh_3D_complex import create_complex_mesh
 from FEM.FEM_source import FEM_Source_Solver_Average
 from aux.merit_figure import merit_magnitude_deviation, merit_spatial_deviation
+from plots.graph_room_outline import plot_room_outline
 
 def example_optim():
     # Dimensiones sala (en centímetros)
@@ -22,10 +24,11 @@ def example_optim():
     source_position = (1.9, 1.0, 1.3)
     receptor_position = (1.25, 1.9, 1.2)
     f_max = 200
+    start_time = time.time()
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 50        # Cantidad de salas a generar
+    M = 200        # Cantidad de salas a generar
     n_walls = 4    # Número de cortes en las paredes
     freqs_eval = np.arange(20, 200, 2)  # Frecuencias a evaluar
     
@@ -69,20 +72,24 @@ def example_optim():
     #print("La sala que lo genero es: ", rooms[idx_worst_room])
     print("............................")
     print("El valor de mértio promedio es: ", np.mean(merit_general))
+    print("............................")
+    print("El tiempo de ejecución en minutos fue de: ", (time.time() - start_time)/60)
     
     best_room_mag = np.sum(mag_responses[idx_best_room], axis=0)/7
     worst_room_mag = np.sum(mag_responses[idx_worst_room], axis=0)/7
     random_room_mag = np.sum(mag_responses[np.random.randint(0, M - 1)], axis=0)/7
-
+    
+    plt.figure("Resultado magnitud")
     plt.plot(freqs_eval, best_room_mag, label= "Best Modal Dist")
     plt.plot(freqs_eval, worst_room_mag, label= "Worst Modal Dist")
     plt.plot(freqs_eval, random_room_mag, label= "Random Modal Dist")
-
-    plt.xlabel("Frequency")
-    plt.xscale('log')
-    plt.ylabel("Modal Amplitude")
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Magnitude (dB)')
     plt.legend()
-    plt.grid()
+    plt.grid(True)
     plt.show()
+    
+    plot_room_outline(Lx, Ly, Dx, Dy, source_position, receptor_position, rooms[idx_best_room], "Distribución mejor cuarto")
+    plot_room_outline(Lx, Ly, Dx, Dy, source_position, receptor_position, rooms[idx_worst_room], "Distribución peor cuarto")
 
 example_optim()

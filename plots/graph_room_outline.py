@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_position, floor_cords):
+def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_position, floor_cords, name):
     # Convertir a metros
     Lx = Lx_cm / 100
     Ly = Ly_cm / 100
@@ -32,10 +32,10 @@ def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_posi
     ax.plot(geo_x, geo_y, linestyle='--', label="Geometría compleja")
 
     # Ajustes de gráfico
-    ax.set_aspect('equal', 'box')
+    #ax.set_aspect('equal', 'box')
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
-    ax.legend()
-    ax.set_title("Contornos de sala y posiciones de fuente/receptor")
+    ax.legend(loc='upper right')
+    ax.set_title(name)
 
     plt.show()

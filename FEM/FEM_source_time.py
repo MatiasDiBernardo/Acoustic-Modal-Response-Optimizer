@@ -52,7 +52,7 @@ def ricker_wavlet_parameters(f_min, f_max, amplitude=1.0, delay_factor=6.0):
     db_drop_resultante = get_db_drop(f_max, sigma)
     return A, sigma, delay, fp_resultante, db_drop_resultante
 
-def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, h_min):
+def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
     """
     Calcula la respuesta al impulso usando el método implícito de Newmark-beta,
     que es incondicionalmente estable y no introduce amortiguación numérica.
@@ -62,13 +62,10 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, h_min):
     rho0 = 1.21
     x_r, y_r, z_r = receptor_pos[0], receptor_pos[1], receptor_pos[2]
 
-    f_min = 20
-    f_max = 200
-
     # Lógica del paso de tiempo basada en precisión (no en CFL)
-    fs_accuracy = 20 * f_max
+    fs_accuracy = 12 * f_max
     dt = 1 / fs_accuracy
-    T_final = (1 / f_min) * 20
+    T_final = (1 / f_min) * 12
     num_steps = int(np.ceil(T_final / dt))
     print(f"Método Implícito (Newmark-beta). Pasos: {num_steps} (T_final={T_final:.3f}s, dt={dt:.2e}s)")
 

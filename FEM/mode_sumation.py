@@ -1,6 +1,6 @@
 import numpy as np
 
-def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.01):
+def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.001):
     """
     Computes the frequency-domain transfer function H(f) between source rs and receiver rr
     in a rigid rectangular room via analytic modal summation. List of assumptions for this

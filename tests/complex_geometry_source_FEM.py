@@ -28,13 +28,17 @@ def example_optim():
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 200        # Cantidad de salas a generar
-    n_walls = 4    # Número de cortes en las paredes
-    freqs_eval = np.arange(20, 200, 2)  # Frecuencias a evaluar
+    M = 100       # Cantidad de salas a generar
+    n_walls = 2    # Número de cortes en las paredes
+    res_freq = 2
+    freqs_eval = np.arange(20, 200, res_freq)  # Frecuencias a evaluar
     
     # Almacenar toda la data
     rooms = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
     mesh = "room_mesh_complex"  # Crear malla con el script correspondiente
+    mesh1 = "room_mesh_complex1"  # Crear malla con el script correspondiente
+    mesh2 = "room_mesh_complex2"  # Crear malla con el script correspondiente
+    mesh3 = "room_mesh_complex3"  # Crear malla con el script correspondiente
     mag_responses = []
     merit_sv_values = []
     merit_md_values = []
@@ -45,19 +49,32 @@ def example_optim():
 
         # Crea la malla de la geometría selecionada
         Z = (Lz - np.random.uniform(0, Dz))/100
-        create_complex_mesh(rooms[i], Z, source_position, f_max, mesh)
-        
+        create_complex_mesh(rooms[i], Z, source_position, 80, mesh1)
+        create_complex_mesh(rooms[i], Z, source_position, 140, mesh2)
+        create_complex_mesh(rooms[i], Z, source_position, 200, mesh3)
+
         # Evalua la rta en frecuencia para esa sala
-        mag = FEM_Source_Solver_Average(freqs_eval, f'mallado/{mesh}.msh', receptor_position)
+        f1 = np.arange(20, 80, res_freq)
+        res1 = FEM_Source_Solver_Average(f1, f'mallado/{mesh1}.msh', receptor_position)
+
+        f2 = np.arange(80, 140, res_freq)
+        res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', receptor_position)
+
+        f3 = np.arange(140, 200, res_freq)
+        res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
+
+        res_tot = np.hstack([res1, res2, res3])
+        res_tot_prom = np.sum(res_tot, axis=0) / 7
 
         # Calcula figuras de mérito
-        sv_merit = merit_spatial_deviation(mag)
-        md_merit = merit_magnitude_deviation(mag)
+        sv_merit = merit_spatial_deviation(res_tot)
+        md_merit = merit_magnitude_deviation(res_tot)
         
         merit_sv_values.append(sv_merit)
         merit_md_values.append(md_merit)
-        mag_responses.append(mag)
+        mag_responses.append(res_tot_prom)
     
+    f_tot =  np.hstack([f1, f2, f3])
     merit_sv_values = np.array(merit_sv_values)
     merit_md_values = np.array(merit_md_values)
     merit_general = merit_md_values + merit_sv_values
@@ -75,14 +92,14 @@ def example_optim():
     print("............................")
     print("El tiempo de ejecución en minutos fue de: ", (time.time() - start_time)/60)
     
-    best_room_mag = np.sum(mag_responses[idx_best_room], axis=0)/7
-    worst_room_mag = np.sum(mag_responses[idx_worst_room], axis=0)/7
-    random_room_mag = np.sum(mag_responses[np.random.randint(0, M - 1)], axis=0)/7
+    best_room_mag = mag_responses[idx_best_room]
+    worst_room_mag = mag_responses[idx_worst_room]
+    random_room_mag = mag_responses[np.random.randint(0, M - 1)]
     
     plt.figure("Resultado magnitud")
-    plt.plot(freqs_eval, best_room_mag, label= "Best Modal Dist")
-    plt.plot(freqs_eval, worst_room_mag, label= "Worst Modal Dist")
-    plt.plot(freqs_eval, random_room_mag, label= "Random Modal Dist")
+    plt.plot(f_tot, best_room_mag, label= "Best Modal Dist")
+    plt.plot(f_tot, worst_room_mag, label= "Worst Modal Dist")
+    plt.plot(f_tot, random_room_mag, label= "Random Modal Dist")
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude (dB)')
     plt.legend()

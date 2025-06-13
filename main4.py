@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 # 1. IMPORTACIONES DE FUNCIONES LOCALES
 from FEM.FEM_source_time import FEM_time_optimal_gaussian_impulse
-from mode_sumation import compute_modal_transfer_complete
+from FEM.mode_sumation import compute_modal_transfer_complete
 from mesh.mesh_3D_generator import generate_mesh_parallelepiped 
 
 # Se asume que los archivos TD_FEM_MUMPS.py existen si se usan 

@@ -2,3 +2,8 @@
 /mallado
 /.vscode
 /__pycache__
+/mesh/__pycache__
+/FEM/__pycache__
+/aux/__pycache__
+/plots/__pycache__
+/room/__pycache__

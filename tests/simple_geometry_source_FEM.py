@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 
 def example_optim_simple():
     # Dimensiones sala (en centímetros)
-    Lx = 3
-    Ly = 4 
-    Lz = 2.4       
-    Dx = 0.7        
-    Dy = 1.2       
+    Lx = 2.5
+    Ly = 3
+    Lz = 2.2       
+    Dx = 0.5        
+    Dy = 0.8       
     Dz = 0.1       
     
     # Posiciones fuente y receptor (en metros)
@@ -24,7 +24,7 @@ def example_optim_simple():
     receptor_position = (1.25, 1.9, 1.2)
 
     # Parametros de control
-    M = 10        # Cantidad de salas a generar
+    M = 200        # Cantidad de salas a generar
     res_freq = 2   # Resolución freq
     
     # Almacenar toda la data

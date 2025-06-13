@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 
 def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.01):
     """
@@ -142,47 +140,3 @@ def compute_modal_transfer_complete(
 
     rta_db = 20 * np.log10(np.abs(H_modal))
     return rta_db
-'''''
-# Parametros
-L = (3.0, 4.0, 2.2)          # Room dimensions [m]
-rs = [1.0, 1.5, 1.2]        # Source position [m]
-rr = [2.9, 2.0, 1.8]        # Receiver position [m]
-freqs = np.arange(20, 200, 1)
-mesh = "mallado/room_max200.msh"  # Crear malla con el script correspondiente
-
-# Modal Sum (resolución analítica sumando auto funciones)
-rta = compute_modal_transfer(rs, rr, L, freqs)
-rta -= rta[0]
-
-# FEM Source común (Calculo por frecuencia de la ecuación de Hemholtz)
-# time_start = time.time()
-# res_fem = FEM_Source_Solver(freqs, mesh, rr)
-# res_fem = 20 * np.log10(np.abs(res_fem))
-# res_fem -= res_fem[0]
-# time_end = time.time() - time_start
-
-# FEM Source Promediado (calcula varios puntos en el espacio para dar la solución)
-# res_base = FEM_Source_Solver_Average(freqs, mesh, rr)
-# res_base_prom = np.sum(res_base, axis=0)/7
-# res_base_prom -= res_base_prom[0]
-
-# FEM Time (Simula en tiempo una respuesta al impulso y calcula RIR)
-freqs_fem, res_fem = FEM_time(mesh, rr)
-res_fem = 20 * np.log10(res_fem)
-res_fem -= res_fem[0]
-
-# Resultados guardades de simulación por Tiempo (para comparar contra la otra versión)
-# fem_time = np.load("mallado/mag_plot.npy")
-# freqs_fem = np.load("mallado/freqs_fem.npy")
-
-plt.figure()
-plt.plot(freqs, rta, '--', label="Modal Summation", linewidth=2)
-# plt.plot(freqs, res_base_prom, '--', label="FEM Promediado", linewidth=2)
-# plt.plot(freqs, res_fem, label="FEM Source")
-plt.plot(freqs_fem, res_fem, '--', label="FEM Time", linewidth=2)
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Magnitude (dB)')
-plt.legend()
-plt.grid(True)
-plt.show()
-'''

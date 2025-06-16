@@ -3,6 +3,19 @@ import numpy as np
 
 class WallsGenerator():
     def __init__(self, Lx, Ly, Dx, Dy, PadX, PadY, N, num_walls, draw):
+        """Generador de geometrías complejas en base a puntos en el espacio.
+
+        Args:
+            Lx (int): Ancho de la sala en centímetros
+            Ly (int): Largo de la sala en centímetros
+            Dx (int): Margen del ancho de la sala en centímetros
+            Dy (int): Margen del largo de la sala en centímetros
+            PadX (int): Pad en pixeles para la visualización
+            PadY (int): Pad en pixeles para la visuallización
+            N (int): Número de densidad de la grilla de puntos
+            num_walls (int): Numero de paredes de la geometría
+            draw (Boolean): Si se integrea con PyGame o no 
+        """
         self.Lx = Lx
         self.Ly = Ly
         self.Dx = Dx
@@ -250,6 +263,19 @@ class WallsGenerator():
             if walls[i] == walls[i + 1]:
                 valid_geometry = False
                 self.score = 0
+
+        return valid_geometry
+
+    def is_valid_genetic(self, walls):
+        # (points, coords) en metros
+        valid_geometry = True
+        for i in range(len(walls) - 1):
+            if self.interior_rect.clipline(walls[i] * 100, walls[i + 1] * 100):
+                valid_geometry = False
+            
+            # Avoid duplicates points
+            if all(walls[i] == walls[i + 1]):
+                valid_geometry = False
 
         return valid_geometry
     

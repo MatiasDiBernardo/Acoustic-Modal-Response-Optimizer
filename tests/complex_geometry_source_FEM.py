@@ -23,15 +23,15 @@ def example_optim():
     # Posiciones fuente y receptor (en metros)
     source_position = (1.9, 1.0, 1.3)
     receptor_position = (1.25, 1.9, 1.2)
-    f_max = 200
+    f_max = 140
     start_time = time.time()
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 100       # Cantidad de salas a generar
+    M = 200       # Cantidad de salas a generar
     n_walls = 2    # Número de cortes en las paredes
     res_freq = 2
-    freqs_eval = np.arange(20, 200, res_freq)  # Frecuencias a evaluar
+    freqs_eval = np.arange(20, f_max, res_freq)  # Frecuencias a evaluar
     
     # Almacenar toda la data
     rooms = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
@@ -60,10 +60,11 @@ def example_optim():
         f2 = np.arange(80, 140, res_freq)
         res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', receptor_position)
 
-        f3 = np.arange(140, 200, res_freq)
-        res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
+        # f3 = np.arange(140, 200, res_freq)
+        # res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
 
-        res_tot = np.hstack([res1, res2, res3])
+        # res_tot = np.hstack([res1, res2, res3])
+        res_tot = np.hstack([res1, res2])
         res_tot_prom = np.sum(res_tot, axis=0) / 7
 
         # Calcula figuras de mérito
@@ -74,7 +75,8 @@ def example_optim():
         merit_md_values.append(md_merit)
         mag_responses.append(res_tot_prom)
     
-    f_tot =  np.hstack([f1, f2, f3])
+    # f_tot =  np.hstack([f1, f2, f3])
+    f_tot =  np.hstack([f1, f2])
     merit_sv_values = np.array(merit_sv_values)
     merit_md_values = np.array(merit_md_values)
     merit_general = merit_md_values + merit_sv_values

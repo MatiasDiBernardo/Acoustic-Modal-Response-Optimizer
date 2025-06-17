@@ -50,7 +50,11 @@ def fitness_func(ga_instance, solution, solution_idx):
     return 1 / merit_value
 
 def print_gen(ga_instance):
+    print(" ")
+    print("-------------------------------------------")
     print(f"Generation {ga_instance.generations_completed}: Best Fitness = {1/ga_instance.best_solution()[1]:.4f}")
+    print("-------------------------------------------")
+    print(" ")
 
 Lx = 250       # Largo de la sala en X 
 Ly = 300       # Largo de la sala en Y
@@ -68,7 +72,7 @@ N = 250        # Densidad de la grilla del generador de geometrías
 n_walls = 2    # Número de cortes en las paredes
 
 # Genetic config
-N_initial_pop = 30
+N_initial_pop = 15
 gene_space = [{'low': 0, 'high': Dx/100},
               {'low': 0, 'high': Dy/100},
               {'low': 0, 'high': Dx/100},
@@ -94,9 +98,9 @@ POP, POINTS, COORDS = initial_population.shape
 initial_pop_flat = initial_population.reshape(POP, POINTS * COORDS)
 
 ga_instance = pygad.GA(
-    num_generations=5,
-    sol_per_pop=POP,  # 30
-    num_parents_mating=2,
+    num_generations=10,
+    sol_per_pop=POP,  # 15
+    num_parents_mating=4,
     initial_population=initial_pop_flat,      # ← your custom start
     fitness_func=fitness_func,
     num_genes=POINTS * COORDS,

@@ -1,4 +1,3 @@
-
 from plots.graph_room_outline import plot_outline_simple
 
 from outline_optim import find_best_outline
@@ -23,10 +22,11 @@ n_walls = 2
 
 ## 1) Mejores dimensiones con geometrías simples
 final_best_room, best_room_spacing, merit, mag_best = find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position)
+
+## 2) Geometría compleja partiendo de mejor geometría simple
     
 print("Espaciado en dX: ", best_room_spacing[0])
 print("Espaciado en dY: ", best_room_spacing[1])
 print(merit)
 
 plot_outline_simple(Lx, Ly, Dx, Dy, final_best_room[0], final_best_room[1])
-

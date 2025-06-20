@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_position, floor_cords, name):
     # Convertir a metros
@@ -38,6 +39,33 @@ def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_posi
     ax.legend(loc='upper right')
     ax.set_title(name)
 
+    plt.show()
+
+def plot_outline_simple(Lx, Ly, Dx, Dy, Lx2, Ly2):
+    # Crear la figura y el eje
+    fig, ax = plt.subplots()
+
+    # Contorno de la sala completa
+    outer_x = [0, Lx, Lx, 0, 0]
+    outer_y = [0, 0, Ly, Ly, 0]
+    ax.plot(outer_x, outer_y, label="Sala completa")
+
+    # Contorno de la sala reducida (centrada)
+    inner_x = [0 + Dx, Lx - Dx, Lx - Dx, 0 + Dx, 0 + Dx]
+    inner_y = [0 + Dy, 0 + Dy, Ly - Dy, Ly - Dy, 0 + Dy]
+    ax.plot(inner_x, inner_y, label="Sala reducida límite")
+
+    # Contorno sala optima
+    dx_room = (Lx - Lx2)/2
+    dy_room = (Ly - Ly2)/2
+
+    outer_x2 = np.array([0, Lx2, Lx2, 0, 0]) + dx_room
+    outer_y2 = np.array([0, 0, Ly2, Ly2, 0]) + dy_room
+    ax.plot(outer_x2, outer_y2, label="Sala optimizada")
+
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.legend(loc='upper right')
     plt.show()
 
 def plot_multiple_rooms(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_position, floor_cords_multi, name):

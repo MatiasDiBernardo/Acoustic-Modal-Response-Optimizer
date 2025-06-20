@@ -263,7 +263,7 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False):
     
     # Defino los puntos a evaluar en el espacio
     tree = geometry.bb_tree(msh, msh.topology.dim) 
-    space_spatial_grid = 0.1
+    space_spatial_grid = 0.1  # Espaciado para el promedidado espacial del SV
     pos_list = from_position_to_grid(rec_loc, space_spatial_grid)
     idx_list = []
     for pos in pos_list:

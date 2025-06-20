@@ -61,7 +61,6 @@ def compute_modal_transfer(rs, rr, L, freqs, c=343.0, eta=0.001):
     rta = 20 * np.log10(np.abs(H))
     return rta
 
-import numpy as np
 
 def compute_modal_transfer_complete(
     rs, rr, L, freqs,
@@ -140,3 +139,39 @@ def compute_modal_transfer_complete(
 
     rta_db = 20 * np.log10(np.abs(H_modal))
     return rta_db
+
+def from_position_to_grid(pos, dx):
+    new_pos = [
+               np.array([pos[0], pos[1], pos[2]]),
+               np.array([pos[0] + dx, pos[1], pos[2]]),
+               np.array([pos[0] - dx, pos[1], pos[2]]),
+               np.array([pos[0], pos[1] + dx, pos[2]]),
+               np.array([pos[0], pos[1] - dx, pos[2]]),
+               np.array([pos[0], pos[1], pos[2] + dx]),
+               np.array([pos[0], pos[1], pos[2] - dx]),
+             ]
+    return new_pos
+
+def compute_modal_sum_average(rooms_coords, source_pos, reciver_pos, freqs):
+    """Devuelve la matriz de resuesta modal con el metodo de modal summation 
+    para calcular las figuras de mérito.
+
+    Args:
+        rooms_coords (tuple(float, float, float)): Dimensiones de  la sala (X, Y, Z) en metros.
+        source_pos ((tuple(float, float, float): Posiciones de la fuente en metros
+        reciver_pos ((tuple(float, float, float): Posicion central del receptor
+        freqs (np.array): Array de frecuencias a analizar
+
+    Returns:
+        np.array(len(freqs), 7): Matriz con las respuesta en diferentes puntos del espacio
+    """
+    space_spatial_grid = 0.1  # Espaciado para el promedidado espacial del SV
+    pos_list = from_position_to_grid(reciver_pos, space_spatial_grid)
+    all_mags = []
+    
+    for pos in pos_list:
+        mag = compute_modal_transfer(source_pos, pos, rooms_coords, freqs)
+        all_mags.append(mag)
+    
+    matriz_response = np.vstack(all_mags)
+    return matriz_response

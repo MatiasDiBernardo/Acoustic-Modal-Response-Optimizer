@@ -42,6 +42,7 @@ def example_optim_simple():
 
         # Simple version
         Lx_new, Ly_new, Lz_new = calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz)
+        # Arreglar posición de fuente y receptor para garantizar simetría
         create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 80, mesh1)
         create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 140, mesh2)
         create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 200, mesh3)

@@ -30,10 +30,10 @@ def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
     Dy_final = calculate_new_spacing(Ly_final, Ly, Dy)
 
     Lz_final = calculate_new_dimensiones(Lz_best, Lz, wcs)
-    Dz_final = calculate_new_spacing(Lz_final, Lz, Dz)
+    #Dz_final = calculate_new_spacing(Lz_final, Lz, Dz)
     
     final_best_room = (Lx_final, Ly_final, Lz_final)
-    final_spacing = (Dx_final, Dy_final, Dz_final)
+    final_spacing = (Dx_final, Dy_final)
     
     return final_best_room, final_spacing
 
@@ -72,8 +72,8 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
         Lx_new, Ly_new, Lz_new = calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz)
         dx_room = (Lx - Lx_new)/2
         dy_room = (Ly - Ly_new)/2
-        new_source_pos = (source_position[0] + dx_room, source_position[1] + dy_room, source_position[2])
-        new_receptor_pos = (receptor_position[0] + dx_room, receptor_position[1] + dy_room, receptor_position[2])
+        new_source_pos = (source_position[0] - dx_room, source_position[1] - dy_room, source_position[2])
+        new_receptor_pos = (receptor_position[0] - dx_room, receptor_position[1] - dy_room, receptor_position[2])
 
         mag = compute_modal_sum_average((Lx_new, Ly_new, Lz_new), new_source_pos, new_receptor_pos, freqs)
         sv_merit = merit_spatial_deviation(mag)
@@ -98,3 +98,4 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
     merit = (sv_merit + md_merit, md_merit, sv_merit)
 
     return final_best_room, best_room_spacing, merit, mag_best
+

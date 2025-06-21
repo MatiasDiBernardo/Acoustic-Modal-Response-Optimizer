@@ -26,11 +26,12 @@ def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_posi
     ax.scatter(receptor_position[0], receptor_position[1], marker='s', label="Receptor")
 
     # Contorno de la geometría compleja
-    geo_x, geo_y = zip(*floor_cords)
-    # Cerrar el polígono
-    geo_x = list(geo_x) + [geo_x[0]]
-    geo_y = list(geo_y) + [geo_y[0]]
-    ax.plot(geo_x, geo_y, linestyle='--', label="Geometría compleja")
+    if len(floor_cords) != 0:
+        geo_x, geo_y = zip(*floor_cords)
+        # Cerrar el polígono
+        geo_x = list(geo_x) + [geo_x[0]]
+        geo_y = list(geo_y) + [geo_y[0]]
+        ax.plot(geo_x, geo_y, linestyle='--', label="Geometría compleja")
 
     # Ajustes de gráfico
     #ax.set_aspect('equal', 'box')

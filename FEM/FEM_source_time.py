@@ -3,7 +3,7 @@ import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
 from scipy.optimize import brentq
-
+from scipy.signal import windows
 # --- Importaciones de DOLFINx ---
 from dolfinx import fem, io, mesh, plot, log, geometry
 
@@ -52,20 +52,36 @@ def ricker_wavlet_parameters(f_min, f_max, amplitude=1.0, delay_factor=6.0):
     db_drop_resultante = get_db_drop(f_max, sigma)
     return A, sigma, delay, fp_resultante, db_drop_resultante
 
-def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
+
+
+def from_position_to_grid(pos, dx):
+    new_pos = [
+               np.array([pos[0], pos[1], pos[2]]),
+               np.array([pos[0] + dx, pos[1], pos[2]]),
+               np.array([pos[0] - dx, pos[1], pos[2]]),
+               np.array([pos[0], pos[1] + dx, pos[2]]),
+               np.array([pos[0], pos[1] - dx, pos[2]]),
+               np.array([pos[0], pos[1], pos[2] + dx]),
+               np.array([pos[0], pos[1], pos[2] - dx]),
+             ]
+    return new_pos
+
+
+
+
+def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max, h_min, use_spatial_averaging=True):
     """
-    Calcula la respuesta al impulso usando el método implícito de Newmark-beta,
-    que es incondicionalmente estable y no introduce amortiguación numérica.
+    Calcula la respuesta al impulso usando el método implícito de Newmark-beta.
+    Permite opcionalmente promediar espacialmente la medición en el receptor.
     """
     # --- 1. Parámetros físicos y de la simulación ---
     c0 = 343.0
     rho0 = 1.21
-    x_r, y_r, z_r = receptor_pos[0], receptor_pos[1], receptor_pos[2]
 
     # Lógica del paso de tiempo basada en precisión (no en CFL)
-    fs_accuracy = 12 * f_max
+    fs_accuracy = 20 * f_max
     dt = 1 / fs_accuracy
-    T_final = (1 / f_min) * 12
+    T_final = (1 / f_min) * 20
     num_steps = int(np.ceil(T_final / dt))
     print(f"Método Implícito (Newmark-beta). Pasos: {num_steps} (T_final={T_final:.3f}s, dt={dt:.2e}s)")
 
@@ -73,7 +89,6 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
     print(f"Caída de {db_drop:.1f} dB en los extremos. Pico en {fp:.1f} Hz.")
 
     sphere_facet_marker = 7
-    receiver_point_eval = np.array([[x_r, y_r, z_r]])
 
     # --- 2. Cargar malla ---
     print(f"\n--- Cargando malla desde: {path_mesh} ---")
@@ -97,7 +112,6 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
     def source_acceleration(t_eval):
         t_shifted = t_eval - source_delay
         term = (t_shifted / source_width)**2
-        # Ondícula de Ricker (2da derivada de una Gaussiana)
         return source_amplitude * (1.0 - 2.0 * term) * np.exp(-term)
 
     # --- 5. Formulación Variacional de Newmark-beta ---
@@ -112,7 +126,7 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
                   c0_**2 * dt_**2 * inner(grad((1 - 2 * beta) * p_now + beta * p_old), grad(v_test)) * dx -
                   c0_**2 * dt_**2 * rho0_ * inner(source_accel_const, v_test) * ds_sphere)
     
-    # --- 6. Preparación de la Simulación ---
+    # --- 6. Preparación de la Simulación y Receptores ---
     print("\n--- Preparando Simulación Implícita ---")
     a_form_compiled = fem.form(a_form_ufl)
     A = assemble_matrix(a_form_compiled)
@@ -126,10 +140,37 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
     solver.setType(PETSc.KSP.Type.PREONLY)
     solver.getPC().setType(PETSc.PC.Type.LU)
 
-    tree = geometry.bb_tree(msh, msh.topology.dim)
-    candidate_cells = geometry.compute_collisions_points(tree, receiver_point_eval)
-    colliding_cells = geometry.compute_colliding_cells(msh, candidate_cells, receiver_point_eval)
-    receptor_cell_idx = colliding_cells.links(0)[0] if colliding_cells.num_nodes > 0 else -1
+    if use_spatial_averaging:
+        # --- SI SE USA PROMEDIACIÓN ---
+        print("\n--- Preparando grilla de receptores para promediación espacial ---")
+        tree = geometry.bb_tree(msh, msh.topology.dim)
+        space_spatial_grid = 0.1 
+        receptor_pos_list = from_position_to_grid(receptor_pos, space_spatial_grid)
+        receptor_cell_idx_list = []
+        points_found = 0
+        for pos in receptor_pos_list:
+            point_to_eval = np.array([pos])
+            candidate_cells = geometry.compute_collisions_points(tree, point_to_eval)
+            colliding_cells = geometry.compute_colliding_cells(msh, candidate_cells, point_to_eval)
+            if colliding_cells.num_nodes > 0:
+                receptor_cell_idx = colliding_cells.links(0)[0]
+                receptor_cell_idx_list.append(receptor_cell_idx)
+                points_found += 1
+        assert len(receptor_pos_list) == len(receptor_cell_idx_list), \
+            f"Error: {len(receptor_pos_list) - points_found} puntos de la grilla están fuera de la malla."
+        print(f"Grilla de {len(receptor_pos_list)} receptores localizada exitosamente.")
+    else:
+        # --- SI NO SE USA PROMEDIACIÓN (UN SOLO PUNTO) ---
+        print("\n--- Preparando receptor en un único punto (sin promediación) ---")
+        tree = geometry.bb_tree(msh, msh.topology.dim)
+        receptor_point_eval = np.array([receptor_pos])
+        candidate_cells = geometry.compute_collisions_points(tree, receptor_point_eval)
+        colliding_cells = geometry.compute_colliding_cells(msh, candidate_cells, receptor_point_eval)
+        receptor_cell_idx = colliding_cells.links(0)[0] if colliding_cells.num_nodes > 0 else -1
+        if receptor_cell_idx == -1:
+            print("ADVERTENCIA: El punto receptor no fue encontrado en la malla.")
+        else:
+            print("Receptor único localizado exitosamente.")
 
     pressure_at_receiver_global = np.zeros(num_steps + 1, dtype=np.float64)
     source_signal_full = np.zeros(num_steps + 1, dtype=np.float64)
@@ -152,8 +193,21 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
 
         if msh.comm.rank == 0:
             source_signal_full[n + 1] = source_accel_const.value
-            if receptor_cell_idx != -1:
-                pressure_at_receiver_global[n + 1] = p_now.eval(receiver_point_eval, [receptor_cell_idx])[0]
+            
+            if use_spatial_averaging:
+                # --- LÓGICA DE PROMEDIACIÓN ---
+                pressure_sum = 0.0
+                num_points = len(receptor_pos_list)
+                if num_points > 0:
+                    for i in range(num_points):
+                        point = np.array([receptor_pos_list[i]])
+                        cell_idx = receptor_cell_idx_list[i]
+                        pressure_sum += p_now.eval(point, [cell_idx])[0]
+                    pressure_at_receiver_global[n + 1] = pressure_sum / num_points
+            else:
+                # --- LÓGICA DE PUNTO ÚNICO ---
+                if receptor_cell_idx != -1:
+                    pressure_at_receiver_global[n + 1] = p_now.eval(receptor_point_eval, [receptor_cell_idx])[0]
 
         if (n + 1) % (num_steps // 10) == 0: print(f"  Progreso: {int(100 * (n + 1) / num_steps)}%")
     print("--- Bucle Temporal Finalizado ---")
@@ -161,7 +215,8 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
     # --- 8. Post-proceso con Deconvolución ---
     if msh.comm.rank == 0:
         print("\n--- Realizando Post-Proceso con Deconvolución ---")
-        P_f = np.fft.fft(pressure_at_receiver_global)
+
+        P_f = np.fft.fft(pressure_at_receiver_global)  
         S_f = np.fft.fft(source_signal_full)
         freqs = np.fft.fftfreq(len(pressure_at_receiver_global), dt)
 
@@ -181,3 +236,4 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max):
         return np.real(f_plot), mag_H, mag_S, mag_P
     else:
         return None, None, None, None
+

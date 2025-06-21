@@ -44,7 +44,7 @@ time_end_source = time.time() - time_start_source
 
 # FEM Time (Simula en tiempo una respuesta al impulso y calcula RIR)
 time_start_time = time.time()
-freqs_fem, mag_H_fem, mag_S_fem, mag_P_fem = FEM_time_optimal_gaussian_impulse(f"mallado/{mesh}.msh", rr, f_min, f_max) 
+freqs_fem, mag_H_fem, mag_S_fem, mag_P_fem = FEM_time_optimal_gaussian_impulse(f"mallado/{mesh}.msh", rr, f_min, f_max, 0, True) 
 H_fem_db = 20 * np.log10(np.abs(mag_H_fem) + 1e-12)
 H_fem_db_normalized = H_fem_db - H_fem_db[0]
 time_end_time = time.time() - time_start_time

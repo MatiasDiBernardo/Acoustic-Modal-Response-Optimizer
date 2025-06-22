@@ -40,22 +40,27 @@ new_source_pos = (source_position[0] - dx_room, source_position[1] - dy_room, so
 new_receptor_pos = (receptor_position[0] - dx_room, receptor_position[1] - dy_room, receptor_position[2])
 # Esto sería como una translación del problema al subcuadrado mas chico
 
-best_rooms_g2, merits_g2, mags_g2 = find_complex_outline_gen2(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos) 
+salas_g2 = 200  # Cantidad de salas para iterar
+best_rooms_g2, merits_g2, mags_g2 = find_complex_outline_gen2(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, salas_g2) 
 time2 = time.time() - start2
 
 ## 3) Geometría compleja mas ancho de banda
 start3 = time.time()
+
 next_gen = 20
-best_rooms_g3, merits_g3, mag_g3 = find_complex_outline_gen3(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g2[:next_gen]) 
+salas_g3 = 20  # Cantidad de salas para iterar
+best_rooms_g3, merits_g3, mag_g3 = find_complex_outline_gen3(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g2[:next_gen], salas_g3) 
 time3 = time.time() - start3
 
-## 4) Geometría compleja mas ancho de banda y resolución
+## 4) Geometría compleja mas ancho de banda y resolución (se introducen mutaciones)
 start4 = time.time()
 next_gen = 3
-# Falta agregar mutaciones a esta versión
 best_rooms_g4, merits_g4, mag_g4 = find_complex_outline_gen4(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g2[:next_gen]) 
 time4 = time.time() - start4
     
+## 5) Mutación final de posición de fuente
+
+
 print("El valor original de mérito es: ", merit_0)
 print("Tiempo de ejecución fue de: ", time0)
 print("...................")

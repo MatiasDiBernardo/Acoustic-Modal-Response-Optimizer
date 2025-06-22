@@ -22,11 +22,11 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
 
     #Se calcula la longitud de onda mas cortrta a representar 
     c = 343
-    landa_max = c/f_max
+    landa_f_max = c/f_max
 
     #Constante de superacion: Bajar si toma demasiado tiempo, subir si falta definicion
-    cte_f = 6 #Cuantos elememtos definimos que entren en landa mas chico Lanxa_max
-    cte_r = 5 #Cuantos elementos definimos que entren en el radio de la esfera
+    cte_f = 5 #Cuantos elememtos definimos que entren en landa mas chico Lanxa_max
+    cte_r = 12 #Cuantos elementos definimos que entren en el radio de la esfera
 
     # Se definen las dimensiones del paralelepípedo y la ubicación de la esfera (todo en S.I)
     Lx, Ly = floor_coords
@@ -34,11 +34,11 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
 
     # Fuente esférica
     x_esfera, y_esfera , z_esfera = source_position 
-    r_esfera = landa_max/cte_f # Radio de la esfera interior
+    r_esfera = landa_f_max / 20 # Radio de la esfera interior
 
     #Se definen las dimensiones maximas y minimas de los elementos
     min_lc = r_esfera / cte_r
-    max_lc = landa_max / cte_f # 
+    max_lc = landa_f_max / cte_f # 
 
     dimensiones = [Lx, Ly, Lz]
     #Verificamos que la esfera no intercecte con las superficies de borde

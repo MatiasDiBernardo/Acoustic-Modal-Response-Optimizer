@@ -237,3 +237,130 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max, h_m
     else:
         return None, None, None, None
 
+def FEM_time_grid(path_mesh, receptor_pos, f_min, f_max, h_min):
+    """
+    Calcula la respuesta al impulso en una grilla de puntos alrededor del receptor
+    y devuelve una matriz con las series de tiempo de presión para cada punto.
+    """
+    # --- 1. Parámetros físicos y de la simulación ---
+    c0 = 343.0
+    rho0 = 1.21
+
+    # Lógica del paso de tiempo basada en precisión (no en CFL)
+    fs_accuracy = 20 * f_max
+    dt = 1 / fs_accuracy
+    T_final = (1 / f_min) * 20
+    num_steps = int(np.ceil(T_final / dt))
+    print(f"Método Implícito (Newmark-beta). Pasos: {num_steps} (T_final={T_final:.3f}s, dt={dt:.2e}s)")
+
+    source_amplitude, source_width, source_delay, fp, db_drop = ricker_wavlet_parameters(f_min, f_max, amplitude=1e6, delay_factor=6.0)
+    print(f"Caída de {db_drop:.1f} dB en los extremos. Pico en {fp:.1f} Hz.")
+
+    sphere_facet_marker = 7
+
+    # --- 2. Cargar malla ---
+    print(f"\n--- Cargando malla desde: {path_mesh} ---")
+    msh, cell_tags, facet_tags = io.gmshio.read_from_msh(
+        path_mesh, MPI.COMM_WORLD, rank=0, gdim=3
+    )
+    msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim)
+
+    # --- 3. Espacio de funciones ---
+    degree = 2
+    V = fem.functionspace(msh, ("Lagrange", degree))
+
+    p_new, p_now, p_old = fem.Function(V), fem.Function(V), fem.Function(V)
+    p_now.x.array[:], p_old.x.array[:] = 0.0, 0.0
+    
+    u, v_test = TrialFunction(V), TestFunction(V)
+    ds_sphere = Measure("ds", domain=msh, subdomain_data=facet_tags, subdomain_id=sphere_facet_marker)
+
+    # --- 4. Definición de la fuente temporal ---
+    source_accel_const = fem.Constant(msh, PETSc.ScalarType(0.0))
+    def source_acceleration(t_eval):
+        t_shifted = t_eval - source_delay
+        term = (t_shifted / source_width)**2
+        return source_amplitude * (1.0 - 2.0 * term) * np.exp(-term)
+
+    # --- 5. Formulación Variacional de Newmark-beta ---
+    dt_ = fem.Constant(msh, PETSc.ScalarType(dt))
+    c0_ = fem.Constant(msh, PETSc.ScalarType(c0))
+    rho0_ = fem.Constant(msh, PETSc.ScalarType(rho0))
+    beta = 0.25
+
+    a_form_ufl = (inner(u, v_test) * dx +
+                  beta * c0_**2 * dt_**2 * inner(grad(u), grad(v_test)) * dx)
+    L_form_ufl = (inner(2 * p_now - p_old, v_test) * dx -
+                  c0_**2 * dt_**2 * inner(grad((1 - 2 * beta) * p_now + beta * p_old), grad(v_test)) * dx -
+                  c0_**2 * dt_**2 * rho0_ * inner(source_accel_const, v_test) * ds_sphere)
+    
+    # --- 6. Preparación de la Simulación y Receptores ---
+    print("\n--- Preparando Simulación Implícita ---")
+    a_form_compiled = fem.form(a_form_ufl)
+    A = assemble_matrix(a_form_compiled)
+    A.assemble()
+
+    L_form_compiled = fem.form(L_form_ufl)
+    b = create_vector(L_form_compiled)
+
+    solver = PETSc.KSP().create(msh.comm)
+    solver.setOperators(A)
+    solver.setType(PETSc.KSP.Type.PREONLY)
+    solver.getPC().setType(PETSc.PC.Type.LU)
+
+    print("\n--- Preparando grilla de receptores ---")
+    tree = geometry.bb_tree(msh, msh.topology.dim)
+    space_spatial_grid = 0.1 
+    receptor_pos_list = from_position_to_grid(receptor_pos, space_spatial_grid)
+    receptor_cell_idx_list = []
+    for pos in receptor_pos_list:
+        point_to_eval = np.array([pos])
+        candidate_cells = geometry.compute_collisions_points(tree, point_to_eval)
+        colliding_cells = geometry.compute_colliding_cells(msh, candidate_cells, point_to_eval)
+        if colliding_cells.num_nodes > 0:
+            receptor_cell_idx_list.append(colliding_cells.links(0)[0])
+    assert len(receptor_pos_list) == len(receptor_cell_idx_list), \
+        "Error: Uno o más puntos de la grilla están fuera de la malla."
+    print(f"Grilla de {len(receptor_pos_list)} receptores localizada exitosamente.")
+    
+    # Se crea una matriz para guardar los resultados: (puntos, tiempo)
+    num_points = len(receptor_pos_list)
+    pressure_at_receiver_matrix = np.zeros((num_points, num_steps + 1), dtype=np.float64)
+    source_signal_full = np.zeros(num_steps + 1, dtype=np.float64)
+
+    # --- 7. Bucle Temporal ---
+    print("\n--- Iniciando Bucle Temporal ---")
+    t = 0.0
+    for n in range(num_steps):
+        t += dt
+        source_accel_const.value = source_acceleration(t)
+
+        with b.localForm() as loc_b: loc_b.zeroEntries()
+        assemble_vector(b, L_form_compiled)
+        b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+
+        solver.solve(b, p_new.x.petsc_vec)
+        p_new.x.scatter_forward()
+
+        p_old.x.array[:], p_now.x.array[:] = p_now.x.array, p_new.x.array
+
+        if msh.comm.rank == 0:
+            source_signal_full[n + 1] = source_accel_const.value
+            
+            # Evaluar la presión en cada punto de la grilla y guardarla en la matriz
+            for i in range(num_points):
+                point = np.array([receptor_pos_list[i]])
+                cell_idx = receptor_cell_idx_list[i]
+                pressure_at_receiver_matrix[i, n + 1] = p_now.eval(point, [cell_idx])[0]
+
+        if (n + 1) % (num_steps // 10) == 0: print(f"  Progreso: {int(100 * (n + 1) / num_steps)}%")
+    print("--- Bucle Temporal Finalizado ---")
+
+    # --- 8. Retorno de Resultados Crudos ---
+    # La sección de post-proceso se elimina. La función ahora devuelve la matriz de presiones
+    # y la señal de la fuente para que el procesamiento se haga externamente.
+    if msh.comm.rank == 0:
+        print("\n--- Simulación Finalizada. Devolviendo resultados crudos. ---")
+        return pressure_at_receiver_matrix, source_signal_full
+    else:
+        return None, None

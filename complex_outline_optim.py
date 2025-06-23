@@ -8,7 +8,7 @@ from FEM.FEM_source import FEM_Source_Solver_Average
 from aux.merit_figure import merit_magnitude_deviation, merit_spatial_deviation
 from plots.graph_room_outline import plot_room_outline
 
-def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position):
+def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, M):
     # Dimensiones sala (en centímetros)
     Lx = int(Lx * 100)       # Largo de la sala en X 
     Ly = int(Ly * 100)       # Largo de la sala en Y
@@ -17,7 +17,6 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 200        # Cantidad de salas a generar
     n_walls = 2    # Número de cortes en las paredes
     f_max = 140
     res_freq = 2
@@ -68,7 +67,7 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     return best_rooms, merit_values, best_mag
 
-def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, rooms_prev_gen):
+def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, rooms_prev_gen, M):
     # Dimensiones sala (en centímetros)
     Lx = int(Lx * 100)       # Largo de la sala en X 
     Ly = int(Ly * 100)       # Largo de la sala en Y
@@ -77,7 +76,6 @@ def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    M = 80       # Cantidad de salas a generar
     n_walls = 2    # Número de cortes en las paredes
     f_max = 180
     res_freq = 2
@@ -133,6 +131,7 @@ def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     best_mag = [mag_responses[i] for i in index_merit_sored]
     
     return best_rooms, merit_values, best_mag
+
 
 def find_complex_outline_gen4(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, rooms_prev_gen):
     # Dimensiones sala (en centímetros)

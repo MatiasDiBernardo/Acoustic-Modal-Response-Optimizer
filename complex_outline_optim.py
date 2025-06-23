@@ -8,7 +8,7 @@ from FEM.FEM_source import FEM_Source_Solver_Average
 from aux.merit_figure import merit_magnitude_deviation, merit_spatial_deviation
 from plots.graph_room_outline import plot_room_outline
 
-def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, M):
+def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, n_walls, M):
     # Dimensiones sala (en centímetros)
     Lx = int(Lx * 100)       # Largo de la sala en X 
     Ly = int(Ly * 100)       # Largo de la sala en Y
@@ -17,8 +17,7 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    n_walls = 2    # Número de cortes en las paredes
-    f_max = 140
+    f_max = 150
     res_freq = 2
     
     # Almacenar toda la data
@@ -67,7 +66,7 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     return best_rooms, merit_values, best_mag
 
-def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, rooms_prev_gen, M):
+def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, n_walls,  rooms_prev_gen, M):
     # Dimensiones sala (en centímetros)
     Lx = int(Lx * 100)       # Largo de la sala en X 
     Ly = int(Ly * 100)       # Largo de la sala en Y
@@ -76,7 +75,6 @@ def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    n_walls = 2    # Número de cortes en las paredes
     f_max = 180
     res_freq = 2
 

@@ -37,7 +37,7 @@ def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
     
     return final_best_room, final_spacing
 
-def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position):
+def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, initial_rooms):
     """Encuentra el mejor cuarto paralelepipedo en base a las dimensiones del cuarto y un
     margen para hacer pruebas de opimización
 
@@ -59,7 +59,6 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
 
     # Controles del proceso
     freqs = np.arange(20, 200, 1)  # Rango de frecuencias para el modal sum
-    N = 1000  # Iteraciones del proceso de geometría cuadrada por Modal Sum
     
     # Resultados
     merit_sv_values = []
@@ -68,7 +67,7 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
     rooms = []
 
     ## Optimización
-    for _ in range(N):
+    for _ in range(initial_rooms):
         Lx_new, Ly_new, Lz_new = calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz)
         dx_room = (Lx - Lx_new)/2
         dy_room = (Ly - Ly_new)/2

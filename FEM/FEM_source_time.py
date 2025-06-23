@@ -4,15 +4,13 @@ from mpi4py import MPI
 from petsc4py import PETSc
 from scipy.optimize import brentq
 from scipy.signal import windows
+from numpy import fft
 # --- Importaciones de DOLFINx ---
 from dolfinx import fem, io, mesh, plot, log, geometry
 
-from dolfinx import fem, io, mesh, geometry
 from dolfinx.fem.petsc import assemble_matrix, assemble_vector, create_vector
 from ufl import (Measure, TrialFunction, TestFunction, grad, inner, dx, ds)
 
-# (También necesitas la función 'ricker_wavlet_parameters' que ya tienes)
-# --------------------------------------------------------------------------
 
 def ricker_wavlet_parameters(f_min, f_max, amplitude=1.0, delay_factor=6.0):
     """
@@ -69,7 +67,7 @@ def from_position_to_grid(pos, dx):
 
 
 
-def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max, h_min, use_spatial_averaging=True):
+def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max, h_min, use_spatial_averaging=True ):
     """
     Calcula la respuesta al impulso usando el método implícito de Newmark-beta.
     Permite opcionalmente promediar espacialmente la medición en el receptor.
@@ -237,7 +235,7 @@ def FEM_time_optimal_gaussian_impulse(path_mesh, receptor_pos, f_min, f_max, h_m
     else:
         return None, None, None, None
 
-def FEM_time_grid(path_mesh, receptor_pos, f_min, f_max, h_min):
+def FEM_time_grid(path_mesh, receptor_pos, f_min, f_max, h_minm, deconvolve=True):
     """
     Calcula la respuesta al impulso en una grilla de puntos alrededor del receptor
     y devuelve una matriz con las series de tiempo de presión para cada punto.
@@ -356,11 +354,24 @@ def FEM_time_grid(path_mesh, receptor_pos, f_min, f_max, h_min):
         if (n + 1) % (num_steps // 10) == 0: print(f"  Progreso: {int(100 * (n + 1) / num_steps)}%")
     print("--- Bucle Temporal Finalizado ---")
 
-    # --- 8. Retorno de Resultados Crudos ---
-    # La sección de post-proceso se elimina. La función ahora devuelve la matriz de presiones
-    # y la señal de la fuente para que el procesamiento se haga externamente.
+    # --- 8. Pospro Opcional --- 
+    source_f_responese = fft.rfft(source_signal_full)
+    freqs = fft.rfftfreq(len(source_signal_full), dt)
+    f_response_matrix  = np.zeros((num_points, len(freqs),)) 
+
+
+    if deconvolve == True:
+        for i in range(num_points):
+            rir = pressure_at_receiver_matrix[i,:]
+            rta_f = fft.rfft(rir)
+            epsilon = (1e-9 * np.max(np.abs(source_f_responese)))**2
+            rta_f = (rta_f * np.conj(source_f_responese)) / (np.abs(source_f_responese)**2 + epsilon)
+            rta_f = 20 * np.log10(np.abs(rta_f))
+            f_response_matrix[i,:] = rta_f
+             
+
     if msh.comm.rank == 0:
         print("\n--- Simulación Finalizada. Devolviendo resultados crudos. ---")
-        return pressure_at_receiver_matrix, source_signal_full
+        return f_response_matrix, freqs 
     else:
         return None, None

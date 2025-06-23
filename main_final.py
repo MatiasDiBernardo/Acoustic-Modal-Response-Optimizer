@@ -55,7 +55,8 @@ time3 = time.time() - start3
 ## 4) Geometría compleja mas ancho de banda y resolución (se introducen mutaciones)
 start4 = time.time()
 next_gen = 3
-best_rooms_g4, merits_g4, mag_g4 = find_complex_outline_gen4(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g2[:next_gen]) 
+mut_ammount = 2
+best_rooms_g4, merits_g4, mag_g4 = find_complex_outline_gen4(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g2[:next_gen], mut_ammount) 
 time4 = time.time() - start4
     
 ## 5) Mutación final de posición de fuente

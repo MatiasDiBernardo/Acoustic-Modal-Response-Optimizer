@@ -25,7 +25,7 @@ def example_optim_simple():
 
     # Parametros de control
     M = 200        # Cantidad de salas a generar
-    res_freq = 2   # Resolución freq
+    res_freq = 1   # Resolución freq
     
     # Almacenar toda la data
     mesh1 = "room_80"
@@ -42,20 +42,26 @@ def example_optim_simple():
 
         # Simple version
         Lx_new, Ly_new, Lz_new = calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz)
+
+        dx_room = (Lx - Lx_new)/2
+        dy_room = (Ly - Ly_new)/2
+        new_source_pos = (source_position[0] - dx_room, source_position[1] - dy_room, source_position[2])
+        new_receptor_pos = (receptor_position[0] - dx_room, receptor_position[1] - dy_room, receptor_position[2])
+
         # Arreglar posición de fuente y receptor para garantizar simetría
-        create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 80, mesh1)
-        create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 140, mesh2)
-        create_simple_mesh(Lx_new, Ly_new, Lz_new, source_position, 200, mesh3)
+        create_simple_mesh(Lx_new, Ly_new, Lz_new, new_source_pos, 80, mesh1)
+        create_simple_mesh(Lx_new, Ly_new, Lz_new, new_source_pos, 140, mesh2)
+        create_simple_mesh(Lx_new, Ly_new, Lz_new, new_source_pos, 200, mesh3)
 
         # Evalua la rta en frecuencia para esa sala
         f1 = np.arange(20, 80, res_freq)
-        res1 = FEM_Source_Solver_Average(f1, f'mallado/{mesh1}.msh', receptor_position)
+        res1 = FEM_Source_Solver_Average(f1, f'mallado/{mesh1}.msh', new_receptor_pos)
 
         f2 = np.arange(80, 140, res_freq)
-        res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', receptor_position)
+        res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', new_receptor_pos)
 
         f3 = np.arange(140, 200, res_freq)
-        res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
+        res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', new_receptor_pos)
 
         res_tot = np.hstack([res1, res2, res3])
         res_tot_prom = np.sum(res_tot, axis=0) / 7

@@ -54,19 +54,21 @@ time0 = time.time() - start0
 
 ## 1) Mejores dimensiones con geometrías simples
 start1 = time.time()
-final_best_room, best_room_spacing, merit_gen1, mag_best = find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, salas_g1)
-time1 = time.time() - start1
+final_best_room, best_room_spacing, merit_gen1_modal, mag_gen1_modal = find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, salas_g1)
 
-## 2) Geometría compleja partiendo de mejor geometría simple
-start2 = time.time()
+# Define nuevas posiciones para estas dimensiones(sería como una translación del problema al subcuadrado mas chico)
 Lx_new, Ly_new, Lz_new = final_best_room
 Dx_new, Dy_new = best_room_spacing
 dx_room = (Lx - Lx_new)/2
 dy_room = (Ly - Ly_new)/2
-# Esto sería como una translación del problema al subcuadrado mas chico
 new_source_pos = (source_position[0] - dx_room, source_position[1] - dy_room, source_position[2])
 new_receptor_pos = (receptor_position[0] - dx_room, receptor_position[1] - dy_room, receptor_position[2])
 
+merit_g1, mag_g1 = calculate_initial(Lx_new, Ly_new, Lz, source_position, receptor_position)
+time1 = time.time() - start1
+
+## 2) Geometría compleja partiendo de mejor geometría simple
+start2 = time.time()
 best_rooms_g2, merits_g2, mags_g2 = find_complex_outline_gen2(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, n_walls, salas_g2) 
 time2 = time.time() - start2
 
@@ -84,7 +86,7 @@ print("El valor original de mérito es: ", merit_0)
 print("Tiempo de ejecución en minutos fue de: ", time0/60)
 print("...................")
 print("Gen 1(con modal sum y geometrías simples)")
-print("El mejor mérito es: ", merit_gen1)
+print("El mejor mérito es: ", merit_g1)
 print("Tiempo de ejecución en minutos fue de: ", time1/60)
 print("...................")
 print("Gen 2 (con FEM Source hasta 150 Hz | res=2)")

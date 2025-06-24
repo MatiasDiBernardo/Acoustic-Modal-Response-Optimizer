@@ -10,11 +10,13 @@ from dolfinx import fem, io, mesh, cpp, geometry
 from dolfinx.fem import form, Function, Constant
 from dolfinx.fem.petsc import LinearProblem, assemble_vector, apply_lifting, set_bc, assemble_matrix # Import assemble_matrix
 from dolfinx.io import VTKFile
+import dolfinx.log
 from scipy.spatial import cKDTree
 from ufl import (TestFunction, TrialFunction, dx, ds, grad, inner,
                  Measure)
 import os
 import traceback # Import traceback for better error reporting
+dolfinx.log.set_log_level(dolfinx.log.LogLevel.WARNING)
 
 def FEM_Source_Solver(frequency, mesh_filename, rec_loc):
     """Solver the Hemholtz equation for given room geometry

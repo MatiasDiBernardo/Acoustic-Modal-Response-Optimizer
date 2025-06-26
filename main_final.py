@@ -1,4 +1,5 @@
 from plots.graph_room_outline import plot_outline_simple, plot_room_outline
+import numpy as np
 import time
 
 from outline_optim import find_best_outline
@@ -21,7 +22,7 @@ receptor_position = (1.25, 1.9, 1.2)
 n_walls = 2    
 
 ## Tipo de optimización (slow, medium, fast)
-optim_type = "fast"
+optim_type = "slow"
 
 if optim_type == "fast":
     salas_g1 = 500
@@ -52,6 +53,9 @@ start0 = time.time()
 merit_0, mag0 = calculate_initial(Lx, Ly, Lz, source_position, receptor_position)
 time0 = time.time() - start0
 
+np.save('merit_0.npy', np.array(merit_0))
+np.save('mag0.npy', np.array(mag0))
+
 ## 1) Mejores dimensiones con geometrías simples
 start1 = time.time()
 final_best_room, best_room_spacing, merit_gen1_modal, mag_gen1_modal = find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, salas_g1)
@@ -64,8 +68,14 @@ dy_room = (Ly - Ly_new)/2
 new_source_pos = (source_position[0] - dx_room, source_position[1] - dy_room, source_position[2])
 new_receptor_pos = (receptor_position[0] - dx_room, receptor_position[1] - dy_room, receptor_position[2])
 
-merit_g1, mag_g1 = calculate_initial(Lx_new, Ly_new, Lz, source_position, receptor_position)
+merit_g1, mag_g1 = calculate_initial(Lx_new, Ly_new, Lz_new, new_source_pos, new_receptor_pos)
 time1 = time.time() - start1
+
+np.save('merit_g1.npy', np.array(merit_g1))
+np.save('mag_g1.npy', np.array(mag_g1))
+np.save('best_dimensiones_g1.npy', np.array([Lx_new, Ly_new, Lz_new, Dx_new, Dy_new]))
+np.save('new_source.npy', np.array(new_source_pos))
+np.save('new_receptor.npy', np.array(new_source_pos))
 
 ## 2) Geometría compleja partiendo de mejor geometría simple
 start2 = time.time()
@@ -81,6 +91,10 @@ time3 = time.time() - start3
 start4 = time.time()
 best_rooms_g4, merits_g4, mag_g4 = find_complex_outline_gen4(Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_source_pos, new_receptor_pos, best_rooms_g3[:next_gen_g4], mut_ammount) 
 time4 = time.time() - start4
+
+np.save('merits_g4.npy', np.array(merits_g4))
+np.save('mag_g4.npy', np.array(mag_g4))
+np.save('rooms_g4.npy', np.array(best_rooms_g4))
 
 print("El valor original de mérito es: ", merit_0)
 print("Tiempo de ejecución en minutos fue de: ", time0/60)

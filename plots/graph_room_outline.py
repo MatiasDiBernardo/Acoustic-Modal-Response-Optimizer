@@ -112,7 +112,7 @@ def plot_room_iterative(original_room, source_position, receptor_position, simpl
     Lx, Ly, Dx, Dy = original_room
 
     # Crear la figura y el eje
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 6))
 
     # Contorno de la sala completa
     outer_x = [0, Lx, Lx, 0, 0]
@@ -131,11 +131,13 @@ def plot_room_iterative(original_room, source_position, receptor_position, simpl
     # Contorno mejor sala simple
     if len(simple_room_optim) != 0:
         Lx_new, Ly_new, Dx_new, Dy_new = simple_room_optim
+        Dx_new = (Lx - Lx_new)/2
+        Dy_new = (Ly - Ly_new)/2
 
         # Contorno de la mejor sala simple
-        outer_x = [0, Lx_new, Lx_new, 0, 0]
-        outer_y = [0, 0, Ly_new, Ly_new, 0]
-        ax.plot(outer_x, outer_y, label="Sala completa")
+        outer_x = [Dx_new, Lx_new + Dx_new, Lx_new + Dx_new, Dx_new, Dx_new]
+        outer_y = [Dy_new, Dy_new, Ly_new + Dy_new, Ly_new + Dy_new, Dy_new]
+        ax.plot(outer_x, outer_y, label="Mejor sala simple")
 
 
     # Contorno de la geometría compleja

@@ -4,6 +4,8 @@ import gmsh
 #import meshio 
 import sys
 
+
+
 def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     """Generate the mesh in a room.msh file that can be loaded by FEniCS
 
@@ -34,7 +36,7 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
 
     # Fuente esférica
     x_esfera, y_esfera , z_esfera = source_position 
-    r_esfera = landa_f_max / 20 # Radio de la esfera interior
+    r_esfera = landa_f_max / 10 # Radio de la esfera interior
 
     #Se definen las dimensiones maximas y minimas de los elementos
     min_lc = r_esfera / cte_r
@@ -246,7 +248,7 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max):
     print("Malla guardada.")
 
     # Descomenta si quieres ver la malla antes de salir
-    #gmsh.fltk.run() 
+    gmsh.fltk.run() 
 
     gmsh.finalize()
     print("Gmsh finalizado.")

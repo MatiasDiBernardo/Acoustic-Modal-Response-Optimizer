@@ -2,7 +2,7 @@ import gmsh
 import os
 import sys
 
-def create_complex_mesh(floor_points, height, source_pos, f_max, name):
+def create_complex_mesh(floor_points, height, source_pos, f_max, name, verbose= False):
     """Crea una malla para una sala con geometría arbitraria definida por una lista de puntos en el piso.
 
     Args:
@@ -12,7 +12,7 @@ def create_complex_mesh(floor_points, height, source_pos, f_max, name):
         f_max (float): Frecuencia máxima para resolución de malla.
         name (string): Nombre base del archivo de salida.
     """
-    verbose = False
+
     # Inicializar Gmsh
     gmsh.initialize()
 
@@ -28,8 +28,8 @@ def create_complex_mesh(floor_points, height, source_pos, f_max, name):
     # Parámetros de malla según frecuencia máxima
     c = 343.0
     lambda_max = c / f_max
-    r_esfera = 0.1
-    min_lc = r_esfera / 10
+    r_esfera = lambda_max / 20
+    min_lc = r_esfera / 20
     max_lc = lambda_max / 10
 
     # Construir el contorno del piso con puntos y líneas
@@ -128,5 +128,5 @@ def create_complex_mesh(floor_points, height, source_pos, f_max, name):
     if verbose:
         print(f"Malla guardada en: {out_path}")
         gmsh.fltk.run() 
-
+    
     gmsh.finalize()

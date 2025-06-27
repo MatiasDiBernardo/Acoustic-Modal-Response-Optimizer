@@ -2,7 +2,7 @@ import gmsh
 import os
 import sys
 
-def create_complex_mesh(floor_points, height, source_pos, f_max, name, verbose= False):
+def create_complex_mesh(floor_points, height, source_pos, f_max, name, verbose= False, degree = 1, element_per_wavelenght = 10):
     """Crea una malla para una sala con geometría arbitraria definida por una lista de puntos en el piso.
 
     Args:
@@ -30,7 +30,7 @@ def create_complex_mesh(floor_points, height, source_pos, f_max, name, verbose= 
     lambda_max = c / f_max
     r_esfera = lambda_max / 20
     min_lc = r_esfera / 20
-    max_lc = lambda_max / 10
+    max_lc = lambda_max / element_per_wavelenght
 
     # Construir el contorno del piso con puntos y líneas
     point_tags = []

@@ -281,6 +281,17 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, 
     # Definir medida para la esfera
     ds_sphere = Measure("ds", domain=msh, subdomain_data=facet_tags, subdomain_id=sphere_facet_marker)
 
+    # Se calcula el área de la superficie de la fuente integrando 1 sobre sus facetas.
+    # Para ello, se define una constante 1.0 sobre la malla para la integración.
+    one = fem.Constant(msh, PETSc.ScalarType(1.0))
+    superficie_esfera = fem.assemble_scalar(fem.form(one * ds_sphere))
+    
+    # Se despeja el radio de la fórmula del área de una esfera: A = 4*pi*r^2  => r = sqrt(A / (4*pi))
+    radio_esfera_calculado = np.sqrt(superficie_esfera / (4 * np.pi))
+    
+    print(f"Radio de la esfera fuente detectado automáticamente: {radio_esfera_calculado:.4f} m")
+
+
     c_type = PETSc.ScalarType
     if not np.issubdtype(c_type, np.complexfloating) and MPI.COMM_WORLD.rank == 0:
         print("ADVERTENCIA: PETSc ScalarType no es complejo. Los resultados pueden ser incorrectos.")
@@ -314,6 +325,8 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, 
     space_points = len(pos_list)  # Real seran 7
     magnitude_matriz = np.zeros((space_points, len(omega)))
     PETSc.Options().clear()
+
+
     for i in range(len(omega)):
         k_wave = omega[i] / c0      # Número de onda (rad/m)
         
@@ -374,13 +387,10 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, 
                 elif msh.comm.rank == 0 : # Serial y no encontrado
                     print(f"ADVERTENCIA: Punto receptor {pos_list} no encontrado en ninguna celda.")
 
-
-        # --- Compensación de la respuesta de la esfera pulsante ---
-    radio_esfera = 0.05  # Ajustar según tu modelo real
     distancia = np.linalg.norm(np.array(rec_loc))  # Asumiendo fuente en origen
 
-    R_f = respuesta_esfera_pulsante_velocidad(frequency, radio_esfera, distancia)
-
+   
+    R_f = respuesta_esfera_pulsante_velocidad(frequency, radio_esfera_calculado, distancia)
     # Dividís cada respuesta espectral por la magnitud ideal de la fuente
     # Usás broadcasting para aplicar a cada fila (posición)
     magnitude_matriz_corr = magnitude_matriz / (R_f[np.newaxis, :] + 1e-20)

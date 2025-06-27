@@ -61,10 +61,14 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     merit_sorted = sorted(merit_index, key=lambda x: x[1])
 
     index_merit_sored, merit_values = zip(*merit_sorted)
+    merit = []
+    for idx in index_merit_sored:
+        merit.append((merit_general[idx], merit_md_values[idx], merit_sv_values[idx]))
+        
     best_rooms = [rooms[i] for i in index_merit_sored]
     best_mag = [mag_responses[i] for i in index_merit_sored]
     
-    return best_rooms, merit_values, best_mag
+    return best_rooms, merit, best_mag
 
 def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, n_walls,  rooms_prev_gen, M):
     # Dimensiones sala (en centímetros)
@@ -125,10 +129,14 @@ def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     merit_sorted = sorted(merit_index, key=lambda x: x[1])
 
     index_merit_sored, merit_values = zip(*merit_sorted)
+    merit = []
+    for idx in index_merit_sored:
+        merit.append((merit_general[idx], merit_md_values[idx], merit_sv_values[idx]))
+
     best_rooms = [rooms[i] for i in index_merit_sored]
     best_mag = [mag_responses[i] for i in index_merit_sored]
     
-    return best_rooms, merit_values, best_mag
+    return best_rooms, merit, best_mag
 
 def mutate_room(coords: np.ndarray,
                 num_points: int = None,
@@ -281,27 +289,47 @@ def find_complex_outline_gen4(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
 
     merit_index = list(enumerate(merit_general))
     merit_sorted = sorted(merit_index, key=lambda x: x[1])
-
     index_merit_sored, merit_values = zip(*merit_sorted)
+    merit = []
+    for idx in index_merit_sored:
+        merit.append((merit_general[idx], merit_md_values[idx], merit_sv_values[idx]))
+
     best_rooms = [rooms[i] for i in index_merit_sored]
     best_mag = [mag_responses[i] for i in index_merit_sored]
     
-    return best_rooms, merit_values, best_mag
+    return best_rooms, merit, best_mag
 
 def calculate_initial(Lx, Ly, Lz, source_position, receptor_position):
     """
     Calcula el valor de mérito para la sala inicial
     """
     fmax = 200
-    freq_res = 1
+    res_freq = 1
 
-    mesh = "room_base_optim"
-    create_simple_mesh(Lx, Ly, Lz, source_position, fmax, mesh)
-    f1 = np.arange(20, fmax, freq_res)
-    mag = FEM_Source_Solver_Average(f1, f'mallado/{mesh}.msh', receptor_position)
-    mag_prom = np.sum(mag, axis=0) / 7
-    sv_merit = merit_spatial_deviation(mag)
-    md_merit = merit_magnitude_deviation(mag)
+    mesh1 = "room_base_optim1"
+    mesh2 = "room_base_optim2"
+    mesh3 = "room_base_optim3"
+    create_simple_mesh(Lx, Ly, Lz, source_position, 80, mesh1)
+    create_simple_mesh(Lx, Ly, Lz, source_position, 140, mesh2)
+    create_simple_mesh(Lx, Ly, Lz, source_position, fmax, mesh3)
+
+    # Evalua la rta en frecuencia para esa sala
+    f1 = np.arange(20, 80, res_freq)
+    res1 = FEM_Source_Solver_Average(f1, f'mallado/{mesh1}.msh', receptor_position)
+
+    f2 = np.arange(80, 140, res_freq)
+    res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', receptor_position)
+
+    f3 = np.arange(140, fmax, res_freq)
+    res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
+
+    res_tot = np.hstack([res1, res2, res3])
+    res_tot_prom = np.sum(res_tot, axis=0) / 7
+
+    # Calcula figuras de mérito
+    sv_merit = merit_spatial_deviation(res_tot)
+    md_merit = merit_magnitude_deviation(res_tot)
+
     merit = (md_merit + sv_merit, md_merit, sv_merit)
         
-    return merit, mag_prom
+    return merit, res_tot_prom

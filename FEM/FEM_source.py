@@ -190,7 +190,29 @@ def from_position_to_grid(pos, dx):
              ]
     return new_pos
 
-def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False):
+
+def respuesta_esfera_pulsante_velocidad(freqs, radio_esfera, distancia_receptor, rho0=1.21, c0=343.0):
+    """
+    Devuelve la magnitud de la respuesta en frecuencia (presión) en campo lejano
+    para una esfera pulsante con velocidad constante en su superficie.
+    """
+    freqs = np.atleast_1d(freqs)
+    omega = 2 * np.pi * freqs
+    k = omega / c0
+    ka = k * radio_esfera
+    kr = k * distancia_receptor
+
+    # Numerador y denominador en magnitud
+    numerador = np.abs(ka * np.exp(-1j * kr))
+    denominador = np.abs(1 - 1j * ka)
+
+    respuesta = rho0 * (radio_esfera / distancia_receptor) * (numerador / denominador)
+    return respuesta
+
+
+
+
+def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, degree = 1):
     """Solver the Hemholtz equation for given room geometry
 
     Args:
@@ -249,7 +271,7 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False):
         exit()
 
     # Espacio de funciones
-    degree = 1
+
     V = fem.functionspace(msh, ("Lagrange", degree))
 
     # Definición del problema variacional (UFL)
@@ -351,5 +373,17 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False):
                         print(f"ADVERTENCIA: Punto receptor {pos_list} no encontrado en ninguna celda en ningún proceso.")
                 elif msh.comm.rank == 0 : # Serial y no encontrado
                     print(f"ADVERTENCIA: Punto receptor {pos_list} no encontrado en ninguna celda.")
-    
-    return 20 * np.log10(magnitude_matriz)
+
+
+        # --- Compensación de la respuesta de la esfera pulsante ---
+    radio_esfera = 0.05  # Ajustar según tu modelo real
+    distancia = np.linalg.norm(np.array(rec_loc))  # Asumiendo fuente en origen
+
+    R_f = respuesta_esfera_pulsante_velocidad(frequency, radio_esfera, distancia)
+
+    # Dividís cada respuesta espectral por la magnitud ideal de la fuente
+    # Usás broadcasting para aplicar a cada fila (posición)
+    magnitude_matriz_corr = magnitude_matriz / (R_f[np.newaxis, :] + 1e-20)
+
+    # Luego pasás a dB
+    return 20 * np.log10(magnitude_matriz_corr + 1e-12)

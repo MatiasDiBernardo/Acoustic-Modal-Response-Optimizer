@@ -7,7 +7,6 @@ from plots.graph_room_outline import plot_room_iterative
 from plots.graph_mag_response import general_mag_response
 
 # El usuario ingresa las dimensiones
-
 Lx = 2.5       # Largo de la sala en X 
 Ly = 3         # Largo de la sala en Y
 Lz = 2.2       # Alto de la sala

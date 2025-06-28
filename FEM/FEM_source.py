@@ -2,7 +2,6 @@
 # !!! NOTA IMPORTANTE SOBRE PETSC Y NÚMEROS COMPLEJOS !!!
 # Esta simulación requiere PETSc compilado con soporte para escalares complejos.
 # ------------------------------------------------------------------------------------
-
 import numpy as np
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -287,7 +286,7 @@ def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, 
     # Se despeja el radio de la fórmula del área de una esfera: A = 4*pi*r^2  => r = sqrt(A / (4*pi))
     radio_esfera_calculado = np.sqrt(superficie_esfera / (4 * np.pi))
     
-    print(f"Radio de la esfera fuente detectado automáticamente: {radio_esfera_calculado:.4f} m")
+    # print(f"Radio de la esfera fuente detectado automáticamente: {radio_esfera_calculado:.4f} m")
 
 
     c_type = PETSc.ScalarType

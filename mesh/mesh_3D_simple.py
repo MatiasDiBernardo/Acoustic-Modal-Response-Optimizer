@@ -16,7 +16,7 @@ def create_simple_mesh(Lx, Ly, Lz, source_pos, f_max, name):
     """
     gmsh.initialize()
     gmsh.model.add("room_lest_refined") # Nombre actualizado
-    gmsh.option.setNumber("General.Verbosity", 0)
+    gmsh.option.setNumber("General.Terminal", 0)
 
     # Crear directorio de salida si no existe
     output_directory = "mallado"

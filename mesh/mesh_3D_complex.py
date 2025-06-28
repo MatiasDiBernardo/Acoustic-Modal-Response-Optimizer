@@ -17,7 +17,7 @@ def create_complex_mesh(floor_points, height, source_pos, f_max, name, verbose= 
     gmsh.initialize()
 
     if not verbose:
-        gmsh.option.setNumber("General.Verbosity", 0)
+        gmsh.option.setNumber("General.Terminal", 0)
 
     gmsh.model.add(name)
 

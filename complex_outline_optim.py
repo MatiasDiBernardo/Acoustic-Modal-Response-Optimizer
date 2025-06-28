@@ -6,7 +6,6 @@ from mesh.mesh_3D_complex import create_complex_mesh
 from mesh.mesh_3D_simple import create_simple_mesh
 from FEM.FEM_source import FEM_Source_Solver_Average
 from aux.merit_figure import merit_magnitude_deviation, merit_spatial_deviation
-from plots.graph_room_outline import plot_room_outline
 
 def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, n_walls, M):
     # Dimensiones sala (en centímetros)
@@ -332,4 +331,41 @@ def calculate_initial(Lx, Ly, Lz, source_position, receptor_position):
 
     merit = (md_merit + sv_merit, md_merit, sv_merit)
         
+    return merit, res_tot_prom
+
+def solve_complex_geom(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, room, res_freq=1):
+    Lx = int(Lx * 100)       # Largo de la sala en X 
+    Ly = int(Ly * 100)       # Largo de la sala en Y
+    Dx = int(Dx * 100)       # Delta X
+    Dy = int(Dy * 100)       # Delta Y
+    
+    # Parametros de control
+    f_max = 200
+
+    mesh1 = "room_mesh_complex1"  # Crear malla con el script correspondiente
+    mesh2 = "room_mesh_complex2"  # Crear malla con el script correspondiente
+    mesh3 = "room_mesh_complex3"  # Crear malla con el script correspondiente
+
+    create_complex_mesh(room, Lz, source_position, 80, mesh1)
+    create_complex_mesh(room, Lz, source_position, 140, mesh2)
+    create_complex_mesh(room, Lz, source_position, f_max, mesh3)
+
+    # Evalua la rta en frecuencia para esa sala
+    f1 = np.arange(20, 80, res_freq)
+    res1 = FEM_Source_Solver_Average(f1, f'mallado/{mesh1}.msh', receptor_position)
+
+    f2 = np.arange(80, 140, res_freq)
+    res2 = FEM_Source_Solver_Average(f2, f'mallado/{mesh2}.msh', receptor_position)
+
+    f3 = np.arange(140, f_max, res_freq)
+    res3 = FEM_Source_Solver_Average(f3, f'mallado/{mesh3}.msh', receptor_position)
+
+    res_tot = np.hstack([res1, res2, res3])
+    res_tot_prom = np.sum(res_tot, axis=0) / 7
+
+    # Calcula figuras de mérito
+    sv_merit = merit_spatial_deviation(res_tot)
+    md_merit = merit_magnitude_deviation(res_tot)
+    merit = (md_merit + sv_merit, md_merit, sv_merit)
+    
     return merit, res_tot_prom

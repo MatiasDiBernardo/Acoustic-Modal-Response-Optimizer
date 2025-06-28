@@ -444,12 +444,13 @@ def _solve_for_degree(msh, facet_tags, pos_list, idx_list, frequency, degree):
 
 # --- FUNCIÓN PRINCIPAL ADAPTATIVA Y CON COMPENSACIÓN ---
 
-def FEM_Source_Solver_Adaptive(frequency, mesh_filename, rec_loc, adaptive=True, verbose=False):
+def FEM_Source_Solver_Adaptive(frequency, mesh_filename, rec_loc,  verbose=False):
     """
     Función principal que dirige la solución FD-FEM y aplica compensación.
     Si adaptive=True, usa un esquema de dos pasadas con diferente orden.
     Si adaptive=False, usa un único orden (grado 2) para todo el rango.
     """
+    adaptive=True
     # --- 1. Preparativos Comunes ---
     print(f"--- Iniciando solver. Modo adaptativo: {adaptive} ---")
     try:

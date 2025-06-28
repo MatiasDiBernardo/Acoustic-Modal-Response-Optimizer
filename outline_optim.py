@@ -20,7 +20,7 @@ def calculate_new_spacing(L_best, L_original, spacing_original):
     return dx
 
 def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
-    wcs = 0.1  # Worst case spacing
+    wcs = 0.05  # Worst case spacing
     Lx_best, Ly_best, Lz_best = best_room
     
     Lx_final = calculate_new_dimensiones(Lx_best, Lx, wcs)

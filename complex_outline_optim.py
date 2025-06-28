@@ -16,8 +16,8 @@ def find_complex_outline_gen2(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    f_max = 150
-    res_freq = 2
+    f_max = 180
+    res_freq = 1
     
     # Almacenar toda la data
     rooms = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
@@ -78,8 +78,8 @@ def find_complex_outline_gen3(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Parametros de control
     N = 250        # Densidad de la grilla del generador de geometrías
-    f_max = 180
-    res_freq = 2
+    f_max = 200
+    res_freq = 1
 
     # Almacenar toda la data
     rooms_new = calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls)
@@ -229,7 +229,6 @@ def create_mutation(rooms, mut_ammount):
             rooms_mut.append(mut)
 
     return rooms_mut
-
 
 def find_complex_outline_gen4(Lx, Ly, Lz, Dx, Dy, source_position, receptor_position, rooms_prev_gen, ammount_mutation):
     # Dimensiones sala (en centímetros)

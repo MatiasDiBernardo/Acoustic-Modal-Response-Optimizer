@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout, QFormLayout, QTabWidget, QMessageBox, QGroupBox,
     QComboBox, QTextEdit, QFileDialog, QCheckBox, QFrame, QSizePolicy, QScrollArea, QGridLayout, QStyleFactory
 )
-from PyQt5.QtGui import QDoubleValidator, QPixmap
+from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -41,48 +41,94 @@ class BROAcousticsGUI(QWidget):
     # CREACION DE VENTANA GENERAL: Configura la ventana principal de la aplicación
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("BRO - Optimizador de Respuesta Modal Acústica")
-        self.setGeometry(100, 100, 1400, 800)
+        self.setWindowTitle("Optimizador de Respuesta Modal Acústica")
+        #self.setGeometry(100, 100, 1400, 800)
+        self.resize(1200, 800)
+        #self.adjustSize()
 
-        self.layout_principal = QVBoxLayout(self)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+
+        self.contenedor = QWidget()
+        self.layout_principal = QVBoxLayout(self.contenedor)
+
+        #self.layout_principal = QVBoxLayout()
+        #self.setStyleSheet("background-color: #2b2b2b; color: white; font-family: Arial, sans-serif;")
+
+        # Header layout para el logo y autores
+        self.header_layout = QHBoxLayout()
+        self.layout_principal.addLayout(self.header_layout)
+
+        banner_layout = QHBoxLayout()
+        logo = QLabel()
+        pixmap = QPixmap('aux/untref_logo.png')
+        pixmap = pixmap.scaled(100,100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        logo.setPixmap(pixmap)
+        logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        autores = QLabel("""
+        <div style='font-size:9pt; line-height:1.1em;'>
+        <p><b>Desarrollado por:</p>
+        <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
+        <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
+        </div>
+        """)
+        autores.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        #autores.setTextFormat(Qt.RichText)
+        #autores.setWordWrap(True)
+        autores.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        autores.setStyleSheet("color: light gray;")
+        
+        banner_layout.addWidget(logo, alignment=Qt.AlignLeft)
+        banner_layout.addWidget(autores, stretch=1, alignment=Qt.AlignRight)
+        banner_layout.addStretch()
+
         self.tabs_principales = QTabWidget()
-
         self.pestana_principal = QWidget()
         self.pestana_instrucciones = QWidget()
 
+        self.layout_principal.addLayout(banner_layout)
         self.tabs_principales.addTab(self.pestana_principal, "Optimización de Sala")
         self.tabs_principales.addTab(self.pestana_instrucciones, "Instrucciones")
 
         self.layout_principal.addWidget(self.tabs_principales)
-
-        #Creditos/autores
-        # creditos = QLabel("<h4>Desarrollado por: Matias Di Bernardo, Matias Veeretbrighen, Romina Lucana y Maria Victoria Alongi</h4> <br> "
-        # "<h5> Instrumentos y Mediciones Acusticas - Ingenieria en Sonido - UNTREF @2025 </h5>")
-        # creditos.setAlignment(Qt.AlignCenter)
-        # creditos.setStyleSheet("color: light gray; font-style: italic; margin-top: 10px;")
-        # self.layout_principal.addWidget(creditos, alignment=Qt.AlignCenter)
-
+        self.layout_principal.addSpacing(5)
+        
         self.inicializar_pestana_principal()
         self.inicializar_pestana_instrucciones()
+        #self.setLayout(self.layout_principal)
 
-        #Logo UNTREF
-        # logo = QLabel()
-        # pixmap = QPixmap('aux/untref_logo.png')
-        # pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
-        # logo.setPixmap(pixmap)
-        # logo.setAlignment(Qt.AlignRight)
-        # self.layout_principal.addWidget(logo, alignment=Qt.AlignRight)
+        self. scroll.setWidget(self.contenedor)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.scroll)
+        self.setLayout(main_layout)
 
     #VENTANA DE INSTRUCCIONES: Configura la pestaña de instrucciones con un texto explicativo
     def inicializar_pestana_instrucciones(self):
         layout = QVBoxLayout()
+        
+        # Logo UNTREF
+        logo = QLabel()
+        pixmap = QPixmap('aux/untref_logo.png')
+        pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
+        logo.setPixmap(pixmap)
+        logo.setAlignment(Qt.AlignRight)
+        layout.addWidget(logo)
+
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
         <ul>
         <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
+        <br>
+        <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
+        <br>
         <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
+        <br>
         <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
-        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</li>
+        <br>
+        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
         <li>Presione "Generar Optimización" para iniciar el proceso.</li>
         <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
         <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
@@ -92,6 +138,21 @@ class BROAcousticsGUI(QWidget):
         """)
         instrucciones.setWordWrap(True)
         layout.addWidget(instrucciones)
+        layout.addSpacing(100)
+
+        # Créditos
+        creditos = QLabel("""
+        <div style="text-align: center;">
+        <h4>Desarrollado por:</h4>
+        <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
+        <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
+        </div>
+        """)
+        creditos.setStyleSheet("color: gray; ")
+        creditos.setWordWrap(True)
+        layout.addWidget(creditos)
+
+        layout.addStretch()
         self.pestana_instrucciones.setLayout(layout)
 
     #VENTANA PRINCIPAL: Configura la pestaña principal con campos de entrada, botones y gráficos
@@ -216,7 +277,7 @@ class BROAcousticsGUI(QWidget):
             checkbox_layout.addWidget(checkbox)
         layout_mag.addLayout(checkbox_layout)
 
-        self.fig_magnitud = Figure(figsize=(6, 3))
+        self.fig_magnitud = Figure(figsize=(5, 3))
         self.canvas_magnitud = FigureCanvas(self.fig_magnitud)
         self.canvas_magnitud.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.canvas_magnitud.updateGeometry()
@@ -240,7 +301,7 @@ class BROAcousticsGUI(QWidget):
             layout_tab = QHBoxLayout()
             
             #Figura del plano
-            fig = Figure(figsize=(4, 3))
+            fig = Figure(figsize=(10, 5))
             canvas = FigureCanvas(fig)
             canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             canvas.updateGeometry()
@@ -331,7 +392,8 @@ class BROAcousticsGUI(QWidget):
        #self.ax_magnitud.set_title("Respuesta en Frecuencia")
         self.ax_magnitud.set_xlabel("Frecuencia (Hz)")
         self.ax_magnitud.set_ylabel("Magnitud")
-        self.ax_magnitud.grid(True)
+        #self.ax_magnitud.set_xscale("log") # Para que la escala sea logaritmica
+        self.ax_magnitud.grid(True, which='both')
 
         # Colores fijos por curva
         colores = {

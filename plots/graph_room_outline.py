@@ -107,12 +107,15 @@ def plot_multiple_rooms(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_po
 
     plt.show()
 
-def plot_room_iterative(original_room, source_position, receptor_position, simple_room_optim, complex_room_optim):
+def plot_room_iterative(original_room, source_position, receptor_position, simple_room_optim, complex_room_optim,ax=None):
     # Convertir a metros
     Lx, Ly, Dx, Dy = original_room
 
     # Crear la figura y el eje
-    fig, ax = plt.subplots(figsize=(4, 6))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(4, 6))
+    else:
+        ax.clear()
 
     # Contorno de la sala completa
     outer_x = [0, Lx, Lx, 0, 0]
@@ -156,4 +159,5 @@ def plot_room_iterative(original_room, source_position, receptor_position, simpl
     ax.set_ylabel("Y (m)")
     ax.legend(loc='upper right')
 
-    plt.show()
+    if ax is None:
+        plt.show()

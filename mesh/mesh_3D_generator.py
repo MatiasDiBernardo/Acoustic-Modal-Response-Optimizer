@@ -4,7 +4,8 @@ import gmsh
 #import meshio 
 import sys
 
-def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max, elements_per_wavelenght=10, name="room"):
+def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max, 
+                                 elements_per_wavelenght=10, name="room", output_path=None):
     """
     Genera una malla 3D de un paralelepípedo con una fuente esférica interna.
 
@@ -20,10 +21,12 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max, elemen
     """
     gmsh.initialize()
     gmsh.model.add("pulsating_sphere_room")
-
-    # --- Creación de Directorio ---
-    output_directory = "mallado"
-    os.makedirs(output_directory, exist_ok=True)
+    if output_path is not None:
+        output_directory = output_path
+    else:
+        # --- Creación de Directorio ---
+        output_directory = "mallado"
+        os.makedirs(output_directory, exist_ok=True)
 
     # --- Parámetros de Malla y Geometría ---
     c = 343  # Velocidad del sonido en m/s

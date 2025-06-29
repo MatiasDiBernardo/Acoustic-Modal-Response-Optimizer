@@ -513,195 +513,50 @@ def FEM_Source_Solver_Adaptive(frequency, mesh_filename, rec_loc,  verbose=False
     print("--- Simulación Finalizada ---")
     return 20 * np.log10(magnitude_matriz_corr + 1e-12)
 
-
-
-
-
-
-'''
-def FEM_Source_Solver_Average(frequency, mesh_filename, rec_loc, verbose=False, degree = 1):
-    """Solver the Hemholtz equation for given room geometry
-
-    Args:
-        frequency (np.array): Array of frequencies to evaluate
-        mesh_filename (str): Path to the geometry to evaluate
-        rec_loc (tuple[float]): Tuple with (X, Y, Z) location of the receptor. It generates 6 nearest points
-
-    Returns:
-        np.array: Magnitude of the pressure
+def run_adaptive_fem_simulation(mesh_info_dict, all_frequencies, receptor_pos):
     """
+    Ejecuta el solver FEM usando la malla apropiada para cada frecuencia
+    y ensambla la respuesta en frecuencia completa.
+    """
+    print("\n--- Iniciando cálculo adaptativo con múltiples mallas ---")
+    
+    # Crear un array para guardar el resultado final
+    final_response_matrix = np.zeros((7, len(all_frequencies))) # Asumiendo 7 puntos de receptor
 
-    # Parámetros físicos y de la simulación
-    omega = 2 * np.pi * frequency # Frecuencia angular (rad/s)
-    c0 = 343.0          # Velocidad del sonido en el aire (m/s)
-    rho0 = 1.225        # Densidad del aire (kg/m^3)
+    # Iterar sobre cada malla y su rango de frecuencia asociado
+    for mesh_path, (f_start, f_end) in mesh_info_dict.items():
+        print(f"\nUtilizando malla: '{os.path.basename(mesh_path)}'")
+        print(f"Para el rango de frecuencia: {f_start:.2f} Hz a {f_end:.2f} Hz")
 
-    # Amplitud de la velocidad normal en la superficie de la esfera interna (m/s)
-    U_normal_sphere = 0.01 # Ejemplo: 1 cm/s
+        # 1. Seleccionar las frecuencias que caen en la banda de esta malla
+        freq_mask = (all_frequencies > f_start) & (all_frequencies <= f_end)
+        freqs_for_this_mesh = all_frequencies[freq_mask]
 
-    # Con esto sabe donde esta la esfera
-    sphere_facet_marker = 7
+        if len(freqs_for_this_mesh) == 0:
+            print("No hay frecuencias en esta banda. Saltando...")
+            continue
 
-    # Cargar malla (.msh)
-    try:
-        # Leer la malla y los tags de celdas y facetas
-        msh, cell_tags, facet_tags = io.gmshio.read_from_msh(
-            mesh_filename, MPI.COMM_WORLD, rank=0, gdim=3
+        # 2. Determinar el grado polinómico basado en la frecuencia
+        #    (Lógica simple: grado 1 para bajas freqs, grado 2 para altas)
+        degree = 1 if f_end <= (np.max(all_frequencies) / 2) else 2
+        print(f"Usando elementos de grado {degree} para esta banda.")
+
+        # 3. Ejecutar el solver FEM con la malla y las frecuencias correctas
+        response_matrix_partial = FEM_Source_Solver_Average(
+            frequency=freqs_for_this_mesh,
+            mesh_filename=mesh_path,
+            rec_loc=receptor_pos,
+            degree=degree,
+            verbose=False
         )
 
-        # Verificación de facet_tags
-        if facet_tags is None or facet_tags.values is None or facet_tags.values.size == 0:
-            print("ERROR CRÍTICO: facet_tags no se cargó correctamente o está vacío.")
-            exit()
-        
-        unique_tags_found = np.unique(facet_tags.values)
-        # print(f"Tags de faceta únicos encontrados en la malla: {unique_tags_found}")
-        # Verificamos solo el tag de la esfera ahora
-        required_tags = {sphere_facet_marker}
-        if not required_tags.issubset(unique_tags_found):
-            print(f"ERROR CRÍTICO: Faltan tags de faceta requeridos. Encontrados: {unique_tags_found}, Requeridos: {required_tags}")
-            exit()
-        # print(f"Marcador de la esfera (tag {sphere_facet_marker}) encontrado en la malla.")
+        # 4. Ensamblar el resultado parcial en la matriz de resultado final
+        final_response_matrix[:, freq_mask] = response_matrix_partial
 
-        # Crear conectividad necesaria
-        msh.topology.create_connectivity(msh.topology.dim - 1, msh.topology.dim) # Facets to cells
-        msh.topology.create_connectivity(msh.topology.dim, msh.topology.dim - 1) # Cells to facets
-        
-        # print(f"Malla cargada: {msh.topology.dim}D, {msh.topology.index_map(msh.topology.dim).size_local} celdas locales (proceso {MPI.COMM_WORLD.rank})")
-
-    except FileNotFoundError:
-        print(f"ERROR: No se encontró el archivo de malla '{mesh_filename}'.")
-        exit()
-    except Exception as e:
-        print(f"ERROR: Ocurrió un problema al cargar la malla: {e}")
-        traceback.print_exc()
-        exit()
-
-    # Espacio de funciones
-
-    V = fem.functionspace(msh, ("Lagrange", degree))
-
-    # Definición del problema variacional (UFL)
-    p_trial = TrialFunction(V)
-    v_test = TestFunction(V)
-
-    # Definir medida para la esfera
-    ds_sphere = Measure("ds", domain=msh, subdomain_data=facet_tags, subdomain_id=sphere_facet_marker)
-
-    # Se calcula el área de la superficie de la fuente integrando 1 sobre sus facetas.
-    # Para ello, se define una constante 1.0 sobre la malla para la integración.
-    one = fem.Constant(msh, PETSc.ScalarType(1.0))
-    superficie_esfera = fem.assemble_scalar(fem.form(one * ds_sphere))
-    
-    # Se despeja el radio de la fórmula del área de una esfera: A = 4*pi*r^2  => r = sqrt(A / (4*pi))
-    radio_esfera_calculado = np.sqrt(superficie_esfera / (4 * np.pi))
-    
-    print(f"Radio de la esfera fuente detectado automáticamente: {radio_esfera_calculado:.4f} m")
+    print("\n--- Ensamblaje de la respuesta final completado. ---")
+    return final_response_matrix
 
 
-    c_type = PETSc.ScalarType
-    if not np.issubdtype(c_type, np.complexfloating) and MPI.COMM_WORLD.rank == 0:
-        print("ADVERTENCIA: PETSc ScalarType no es complejo. Los resultados pueden ser incorrectos.")
-    
-    # Defino los puntos a evaluar en el espacio
-    tree = geometry.bb_tree(msh, msh.topology.dim) 
-    space_spatial_grid = 0.1  # Espaciado para el promedidado espacial del SV
-    pos_list = from_position_to_grid(rec_loc, space_spatial_grid)
-    idx_list = []
-    for pos in pos_list:
-        receiver_point_eval = np.array([pos]) # Para eval, necesita forma (1,3)
-
-        candidate_cells_adj = geometry.compute_collisions_points(tree, receiver_point_eval.astype(np.float64))
-        receptor_cell_idx = -1
-        if candidate_cells_adj.num_nodes > 0: 
-            colliding_cells_adj = geometry.compute_colliding_cells(msh, candidate_cells_adj, receiver_point_eval.astype(np.float64))
-            if colliding_cells_adj.num_nodes > 0: 
-                cells_found_for_point_0 = colliding_cells_adj.links(0) 
-                if len(cells_found_for_point_0) > 0:
-                    receptor_cell_idx = cells_found_for_point_0[0] 
-                    idx_list.append(receptor_cell_idx)
-    
-    assert len(pos_list) == len(idx_list), "Un elemento de la grilla de puntos espaciales no se le pudo asignar malla"
-
-    if verbose:
-        print("La lista de posiciones es: ", pos_list)
-        print("La lista de indices es: ", idx_list)
-
-    # Itero en frecuencia
-
-    space_points = len(pos_list)  # Real seran 7
-    magnitude_matriz = np.zeros((space_points, len(omega)))
-    PETSc.Options().clear()
 
 
-    for i in range(len(omega)):
-        k_wave = omega[i] / c0      # Número de onda (rad/m)
-        
-        # Condición de Neumann en la esfera: dp/dn = g_N
-        neumann_value = -1j * omega[i] * rho0 * U_normal_sphere
-        neumann_term = fem.Constant(msh, c_type(neumann_value)) # Esto es g_N
-        # print(f"Valor del término de Neumann (g_N) en la esfera: {neumann_value:.2e}")
 
-        a_form_ufl = inner(grad(p_trial), grad(v_test)) * dx \
-                    - k_wave**2 * inner(p_trial, v_test) * dx
-
-        # Forma lineal (lado derecho de la ecuación débil)
-        # Sigue siendo solo el término de Neumann en la esfera
-        L_form_ufl = -inner(neumann_term, v_test) * ds_sphere # SIGNO CORREGIDO
-
-        bcs = [] # Sin condiciones de Dirichlet
-
-        A_form = form(a_form_ufl, dtype=PETSc.ScalarType)
-        b_form = form(L_form_ufl, dtype=PETSc.ScalarType)
-
-        # 2) Assemble system
-        A = assemble_matrix(A_form, bcs=bcs)
-        A.assemble()
-
-        b = assemble_vector(b_form)
-        for bc in bcs:
-            bc.apply(b)
-        
-        x_petsc = A.createVecLeft()       # this is a petsc4py.PETSc.Vec
-
-        # 3) Build your custom KSP/PC
-        ksp = PETSc.KSP().create(msh.comm)
-        ksp.setOperators(A)
-        ksp.setType("preonly")
-        pc = ksp.getPC()
-        pc.setType("lu")
-        pc.setFactorSolverType("mumps")
-
-        # 4) Solve into x_petsc
-        ksp.solve(b, x_petsc)
-
-        # 5) Copy the data back into your Function
-        p_solution = Function(V, dtype=PETSc.ScalarType)
-        # DOLFINx Vector (p_solution.x) has an .array property you can overwrite:
-        p_solution.x.array[:] = x_petsc.getArray()
-
-        for j in range(space_points):
-            # Guarda el resultado en los puntos del espacio elegidos
-            if receptor_cell_idx != -1:
-                solucion_compleja = p_solution.eval(np.array(pos_list[j]), [idx_list[j]])
-                magnitude_matriz[j, i] = np.abs(solucion_compleja)
-            else:
-                if msh.comm.size > 1:
-                    _found_locally = 1 if receptor_cell_idx != -1 else 0 
-                    found_globally = msh.comm.allreduce(_found_locally, op=MPI.SUM)
-                    if found_globally == 0 and msh.comm.rank == 0 : 
-                        print(f"ADVERTENCIA: Punto receptor {pos_list} no encontrado en ninguna celda en ningún proceso.")
-                elif msh.comm.rank == 0 : # Serial y no encontrado
-                    print(f"ADVERTENCIA: Punto receptor {pos_list} no encontrado en ninguna celda.")
-
-    distancia = np.linalg.norm(np.array(rec_loc))  # Asumiendo fuente en origen
-
-   
-    R_f = respuesta_esfera_pulsante_velocidad(frequency, radio_esfera_calculado, distancia)
-    # Dividís cada respuesta espectral por la magnitud ideal de la fuente
-    # Usás broadcasting para aplicar a cada fila (posición)
-    magnitude_matriz_corr = magnitude_matriz / (R_f[np.newaxis, :] + 1e-20)
-
-    # Luego pasás a dB
-    return 20 * np.log10(magnitude_matriz_corr + 1e-12)
-'''

@@ -125,7 +125,7 @@ def calculation_of_geometry_simple(Lx, Ly, Lz, Dx, Dy, Dz):
 
     return (dx_random, dy_random, dz_random)
 
-def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
+def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls, verbose=False):
     """Genera puntos de posibles geometrías de control room.
 
     Args:
@@ -152,14 +152,21 @@ def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls):
 
     # Inicializa el generador
     wall = WallsGenerator(Lx, Ly, Dx, Dy, PadX, PadY, N, n_walls, False)
+    max_iter = 100000
+    count = 0
     
     # Genera las salas
-    while len(valid_rooms) < M:
+    while len(valid_rooms) < M or count < max_iter:
+        count += 1
         grid_random = grid_random_sampler(N, n_walls)
         
         # Genera grilla y puntos
         wall.intial_condition_grid(screen)
         wall.dots_grid(screen, grid_random)
+        
+        if verbose:
+            print(f"Cantidad de iteraciones: ", count)
+            print(f"Cantidad de salas encontradas: ", len(valid_rooms))
         
         # Si es válido y no se repite agregarlo
         if wall.is_valid():

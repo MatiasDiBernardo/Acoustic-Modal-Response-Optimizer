@@ -1,15 +1,3 @@
-"""
-Prueba de estructura de GUI con resultados obtenidos de ejemplo.
-Esta GUI permite al usuario ingresar dimensiones de una sala, posiciones de fuente y receptor,
-y generar una optimización de la respuesta modal acústica.
-Los resultados se muestran en gráficos y se pueden exportar a un archivo CSV.
-La GUI está construida con PyQt5 y utiliza Matplotlib para los gráficos.
-La estructura incluye pestañas para la entrada de datos y un manual de instrucciones.
-El usuario puede ingresar dimensiones de la sala, tolerancias, posiciones de fuente y receptor,
-y ver los resultados de la optimización en gráficos interactivos.
-Esta implementación es un ejemplo básico y puede ser extendida con más funcionalidades según sea necesario.
-
-"""
 
 import sys
 import os
@@ -19,7 +7,7 @@ import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout,
     QHBoxLayout, QFormLayout, QTabWidget, QMessageBox, QGroupBox,
-    QComboBox, QTextEdit, QFileDialog, QCheckBox, QFrame
+    QComboBox, QTextEdit, QFileDialog, QCheckBox, QFrame, QSizePolicy, QScrollArea, QGridLayout, QStyleFactory
 )
 from PyQt5.QtGui import QDoubleValidator, QPixmap
 from PyQt5.QtCore import Qt
@@ -64,17 +52,8 @@ class BROAcousticsGUI(QWidget):
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
         <ul>
-        <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
-        <li>Configure la posición del receptor y la fuente sonora, en metros.</li>
-        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</li>
-        <li>Presione "Generar Optimización" para iniciar el proceso.</li>
-        <li>Los resultados se mostrarán en la pestaña de resultados.</li>
-        <li>Puede mostrar/ocultar curvas en la gráfica de respuesta modal usando los checkboxes.</li>
-        <li>Para exportar los resultados, use el botón "Exportar Resultados".</li>
-        <li>Los resultados se guardarán en un archivo CSV.</li>
-        <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
-        <li>El índice de mérito se mostrará en el plano de la sala.</li>
-        <li>Para más información, consulte la documentación del proyecto.</li>
+        <li>Ingrese las dimensiones de la sala y sus tolerancias.</li>
+        <li>Configure la posición del receptor y la fuente sonora.</li>
         <li>Presione "Generar Optimización" para ver los resultados.</li>
         <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
         <li>Utilice el botón de exportar para guardar los resultados en CSV.</li>
@@ -173,7 +152,7 @@ class BROAcousticsGUI(QWidget):
 
         # TAB ENTRADA DE DATOS
         grupo_entrada.setLayout(layout_entrada)
-        layout_general.addWidget(grupo_entrada, 2)
+        layout_general.addWidget(grupo_entrada, 1)
 
         # TAB RESULTADOS
         grupo_resultados = QGroupBox("Resultados")
@@ -185,7 +164,7 @@ class BROAcousticsGUI(QWidget):
 
         checkbox_layout = QHBoxLayout()
         self.checkboxes = {}
-        for key in ["Base", "Simple", "Compleja"]:
+        for key in ["Original", "Simple", "Compleja"]:
             checkbox = QCheckBox(key)
             checkbox.setChecked(True)
             checkbox.stateChanged.connect(self.actualizar_curvas_magnitud)
@@ -193,33 +172,75 @@ class BROAcousticsGUI(QWidget):
             checkbox_layout.addWidget(checkbox)
         layout_mag.addLayout(checkbox_layout)
 
-        self.fig_magnitud = Figure(figsize=(6, 3))
+        self.fig_magnitud = Figure()
         self.canvas_magnitud = FigureCanvas(self.fig_magnitud)
+        self.canvas_magnitud.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.canvas_magnitud.updateGeometry()
         self.ax_magnitud = self.fig_magnitud.add_subplot(111)
         layout_mag.addWidget(self.canvas_magnitud)
         grupo_mag.setLayout(layout_mag)
         layout_resultados.addWidget(grupo_mag)
 
-        # Subgrupo Plano de Sala
+        # Subgrupo Plano de Sala con 3 Tabs
         grupo_plano = QGroupBox("Plano de Sala")
-        layout_plano = QHBoxLayout()
+        layout_plano_tabs = QVBoxLayout()
 
-        self.fig_planta = Figure(figsize=(4, 3))
-        self.canvas_planta = FigureCanvas(self.fig_planta)
-        self.ax_planta = self.fig_planta.add_subplot(111)
-        layout_plano.addWidget(self.canvas_planta)
+        self.tabs_plano = QTabWidget()
 
-        self.info_label = QLabel()
-        self.info_label.setWordWrap(True)
-        self.info_label.setFrameStyle(QFrame.Panel | QFrame.Sunken)
-        self.info_label.setMinimumWidth(200)
-        layout_plano.addWidget(self.info_label)
+        self.axs_plantas = {}
+        self.canvas_plantas = {}
+        self.labels_merito = {}
 
-        grupo_plano.setLayout(layout_plano)
+        for nombre in ["Original", "Simple", "Compleja"]:
+            tab = QWidget()
+            layout_tab = QHBoxLayout()
+            
+            #Figura del plano
+            fig = Figure()
+            canvas = FigureCanvas(fig)
+            canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            canvas.updateGeometry()
+            ax = fig.add_subplot(111)
+
+            layout_tab.addWidget(canvas)
+
+            # Contenedor vertical para mérito + leyenda visual
+            info_container = QWidget()
+            info_layout = QVBoxLayout(info_container)
+
+            # QLabel para texto de mérito
+            info_label = QLabel()
+            info_label.setWordWrap(True)
+            info_label.setFrameStyle(QFrame.Panel | QFrame.Sunken)
+            info_label.setAlignment(Qt.AlignTop)
+            info_label.setMinimumWidth(200)
+            info_layout.addWidget(info_label)
+
+            # Canvas para leyenda visual (lo agregaremos en tiempo de ejecución)
+            legend_canvas = None  # Se definirá en actualizar_plano
+            info_layout.addStretch()
+
+            layout_tab.addWidget(info_container)
+            tab.setLayout(layout_tab)
+
+            self.labels_merito[nombre] = info_label
+            self.legend_canvas = self.legend_canvas if hasattr(self, 'legend_canvas') else {}
+            self.legend_canvas[nombre] = legend_canvas
+            self.info_layouts = self.info_layouts if hasattr(self, 'info_layouts') else {}
+            self.info_layouts[nombre] = info_layout
+
+            self.tabs_plano.addTab(tab, nombre)
+            self.axs_plantas[nombre] = ax
+            self.canvas_plantas[nombre] = canvas
+            
+
+        layout_plano_tabs.addWidget(self.tabs_plano)
+        grupo_plano.setLayout(layout_plano_tabs)
         layout_resultados.addWidget(grupo_plano)
 
+
         grupo_resultados.setLayout(layout_resultados)
-        layout_general.addWidget(grupo_resultados, 3)
+        layout_general.addWidget(grupo_resultados, 4)
 
         self.pestana_principal.setLayout(layout_general)
 
@@ -240,10 +261,16 @@ class BROAcousticsGUI(QWidget):
             mag4 = np.load("example/mag_g4.npy")[0]
 
             self.curvas = {
-                'Base': (self.frecuencias, mag0),
+                'Original': (self.frecuencias, mag0),
                 'Simple': (self.frecuencias, mag1),
                 'Compleja': (self.frecuencias, mag4),
             }
+
+            self.geometrias['Original'] = []
+            self.meritos['Original'] = get_scalar(np.load("example/merit_0.npy"))
+
+            self.geometrias['Simple'] = np.load("example/best_dimensiones_g1.npy")[[0,1,3,4]]
+            self.meritos['Simple'] = get_scalar(np.load("example/merit_g1.npy"))
 
             self.geometrias['Compleja'] = np.load("example/rooms_g4.npy")[0]
             self.meritos['Compleja'] = get_scalar(np.load("example/merits_g4.npy")[0])
@@ -257,51 +284,91 @@ class BROAcousticsGUI(QWidget):
 
     def actualizar_curvas_magnitud(self):
         self.ax_magnitud.clear()
-        self.ax_magnitud.set_title("Respuesta en Frecuencia")
+       #self.ax_magnitud.set_title("Respuesta en Frecuencia")
         self.ax_magnitud.set_xlabel("Frecuencia (Hz)")
         self.ax_magnitud.set_ylabel("Magnitud")
         self.ax_magnitud.grid(True)
 
         # Colores fijos por curva
         colores = {
-            "Base": "cyan",
+            "Original": "cyan",
             "Simple": "lime",
             "Compleja": "magenta"
         }
 
         # Curvas visibles según checkboxes
-        for key in ["Base", "Simple", "Compleja"]:
+        for key in ["Original", "Simple", "Compleja"]:
             if self.checkboxes[key].isChecked():
                 freqs, mag = self.curvas[key]
                 self.ax_magnitud.plot(freqs, mag, label=key, color=colores[key])
 
         self.ax_magnitud.legend()
+        self.fig_magnitud.tight_layout()
         self.canvas_magnitud.draw()
 
     # ACTUALIZACION DEL PLANO DE LA SALA: Grafica el plano de la sala con las geometrías seleccionadas
     # y muestra el índice de mérito correspondiente
     def actualizar_plano(self):
         try:
-            self.ax_planta.clear()
-            geo = self.geometrias.get('Compleja', [])
-            if len(geo) == 0:
-                return
-
             Lx = float(self.entradas['Lx'].text() or 2.5)
             Ly = float(self.entradas['Ly'].text() or 3.0)
             Dx = float(self.entradas['tol_Lx'].text() or 0.4)
             Dy = float(self.entradas['tol_Ly'].text() or 0.6)
             pos_fuente = tuple(float(self.entradas[f'fuente_{a}'].text() or d) for a, d in zip('xyz', [1.9, 1.0, 1.3]))
             pos_receptor = tuple(float(self.entradas[f'receptor_{a}'].text() or d) for a, d in zip('xyz', [1.25, 1.9, 1.2]))
-            simple = self.geometrias.get('Simple', [])
 
-            plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, [], geo, ax=self.ax_planta)
-            self.ax_planta.set_title("Plano de Sala")
-            self.canvas_planta.draw()
+            for key in ["Original", "Simple", "Compleja"]:
+                ax = self.axs_plantas[key]
+                canvas = self.canvas_plantas[key]
+                ax.clear()
 
-            texto_info = f"<b>Índice de mérito:</b> {self.meritos.get('Compleja', 0):.3f}<br>"
-            self.info_label.setText(texto_info)
-            self.terminal.append("[INFO] Plano de sala graficado.")
+                simple = self.geometrias['Simple'] if key != "Original" else []
+                complexa = self.geometrias[key] if key == "Compleja" else []
+
+                # Dibuja con leyenda interna
+                plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, simple, complexa, ax=ax)
+
+                # Extraer leyenda antes de borrarla
+                handles, labels = ax.get_legend_handles_labels()
+                legend = ax.get_legend()
+                if legend:
+                    legend.remove()  # Ocultar la leyenda del gráfico
+
+                canvas.draw()
+
+                # Texto del índice de mérito
+                texto = f"<b>Índice de Mérito:</b><br>{self.meritos.get(key, 0):.3f}"
+                self.labels_merito[key].setText(texto)
+
+                # Eliminar viejo legend_canvas si existe
+                if self.legend_canvas[key]:
+                    self.legend_canvas[key].setParent(None)
+                    self.info_layouts[key].removeWidget(self.legend_canvas[key])
+                    self.legend_canvas[key].deleteLater()
+                    self.legend_canvas[key] = None
+
+                # Crear mini-leyenda visual si hay handles
+                if handles:
+                    fig_leg = Figure()
+                    ax_leg = fig_leg.add_subplot(111)
+                    ax_leg.axis("off")
+
+                    # Agregar leyenda con estilos completos
+                    leg = ax_leg.legend(handles, labels, loc='center left', frameon=False)
+
+                    # Ajustar automáticamente el tamaño de la figura a la leyenda
+                    fig_leg.tight_layout(pad=0.5)
+
+                    # Crear canvas y actualizar
+                    canvas_leg = FigureCanvas(fig_leg)
+                    canvas_leg.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+                    canvas_leg.draw()
+
+                    self.legend_canvas[key] = canvas_leg
+                    self.info_layouts[key].insertWidget(1, canvas_leg)
+    
+
+                self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {self.meritos.get(key, 0):.3f}")
 
         except Exception as e:
             self.terminal.append(f"[ERROR] No se pudo actualizar el plano: {str(e)}")

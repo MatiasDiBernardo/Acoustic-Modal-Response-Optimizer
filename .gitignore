@@ -10,3 +10,6 @@
 notebooks/mallado
 /entorno
 /venv
+__pycache__/
+*.pyc
+mesh/__pycache__/mesh_3D_generator.cpython-310.pyc

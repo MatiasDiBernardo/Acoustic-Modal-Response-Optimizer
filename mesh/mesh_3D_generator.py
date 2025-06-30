@@ -33,7 +33,7 @@ def generate_mesh_parallelepiped(floor_coords, Z, source_position, f_max,
     landa_f_max = c / f_max
 
     cte_f = elements_per_wavelenght
-    cte_r = 12  # Elementos que definen el radio de la esfera
+    cte_r = 15  # Elementos que definen el radio de la esfera
 
     Lx, Ly = floor_coords
     Lz = Z

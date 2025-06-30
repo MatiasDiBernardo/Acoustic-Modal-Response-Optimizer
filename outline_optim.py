@@ -37,7 +37,7 @@ def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
     
     return final_best_room, final_spacing
 
-def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, initial_rooms):
+def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, optim_type):
     """Encuentra el mejor cuarto paralelepipedo en base a las dimensiones del cuarto y un
     margen para hacer pruebas de opimización
 
@@ -50,15 +50,24 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
         Dz (float): Espaciado del alto en metros
         source_position (tuple(x, y, z)): Posicion de la fuente en metros
         receptor_position (tuple(x, y, z)): Posicion del receptor en metros
+        optim_type: Tipo de optimización, puede ser "slow", "medium" or "fast"
     Returns:
         best_room (tuple(x, y, z)): Dimensiones del mejor cuarto encontrado 
         spacing_room (tuple(dx, dy, dz)): Espaciado del mejor cuarto encontrado 
-        merti_figure (tuple(FM, MD, SD)): Figuras de mérito
+        merit_figure (tuple(FM, MD, SD)): Figuras de mérito
         mag (array): Respuesta en frecuencia del mejor cuarto
     """
 
     # Controles del proceso
     freqs = np.arange(20, 200, 1)  # Rango de frecuencias para el modal sum
+    
+    # Salas a iterar
+    if optim_type == "Fast":
+        initial_rooms = 500
+    if optim_type == "Medium":
+        initial_rooms = 1000
+    if optim_type == "Fast":
+        initial_rooms = 2000
     
     # Resultados
     merit_sv_values = []
@@ -95,6 +104,7 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
     sv_merit = merit_spatial_deviation(mag_best)
     md_merit = merit_magnitude_deviation(mag_best)
     merit = (sv_merit + md_merit, md_merit, sv_merit)
+    mag = np.sum(mag_best, axis=0)/7
 
-    return final_best_room, best_room_spacing, merit, mag_best
+    return final_best_room, best_room_spacing, merit, mag
 

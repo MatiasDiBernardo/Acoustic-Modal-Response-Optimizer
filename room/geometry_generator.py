@@ -156,7 +156,7 @@ def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls, verbose=False):
     count = 0
     
     # Genera las salas
-    while len(valid_rooms) < M or count < max_iter:
+    while len(valid_rooms) < M:
         count += 1
         grid_random = grid_random_sampler(N, n_walls)
         

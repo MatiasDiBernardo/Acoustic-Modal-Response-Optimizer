@@ -129,10 +129,10 @@ def calculation_of_geometry(Lx, Ly, Dx, Dy, N, M, n_walls, verbose=False):
     """Genera puntos de posibles geometrías de control room.
 
     Args:
-        Lx (int): Largo de la sala en X
-        Ly (int): Largo de la sala en Y
-        Dx (int): Delta X
-        Dy (int): Delta Y
+        Lx (int): Largo de la sala en X (centimetros)
+        Ly (int): Largo de la sala en Y (centimetros)
+        Dx (int): Delta X (centimetros)
+        Dy (int): Delta Y (centimetros)
         N (int): Densidad de la grilla interna para generar los puntos
         M (int): Cantidad de salas
         n_walls (int): Cantidad de paredes (cortes) en un solo lado del cuarto

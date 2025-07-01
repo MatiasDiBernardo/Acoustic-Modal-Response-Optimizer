@@ -344,6 +344,13 @@ class BROAcousticsGUI(QWidget):
             self.info_layouts = self.info_layouts if hasattr(self, 'info_layouts') else {}
             self.info_layouts[nombre] = info_layout
 
+            if nombre == "Simple":
+                self.label_dimensiones_simple = QLabel()
+                self.label_dimensiones_simple.setWordWrap(True)
+                self.label_dimensiones_simple.setStyleSheet("color: gray;")
+                self.info_layouts[nombre].addWidget(self.label_dimensiones_simple)
+    
+
             self.tabs_plano.addTab(tab, nombre)
             self.axs_plantas[nombre] = ax
             self.canvas_plantas[nombre] = canvas
@@ -455,7 +462,7 @@ class BROAcousticsGUI(QWidget):
 
             # Geometría compleja
             best_complex_room, merit2, mag2 = find_complex_random_optim(
-                Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_fuente, new_receptor, cantidad_paredes, velocidad
+                Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new, new_fuente, new_receptor, cantidad_paredes, velocidad
             )
 
             # Guardar curvas y geometrías
@@ -466,7 +473,7 @@ class BROAcousticsGUI(QWidget):
             }
 
             self.geometrias['Original'] = []
-            self.geometrias['Simple'] = [Lx_new, Ly_new, Dx_new, Dy_new]
+            self.geometrias['Simple'] = [Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new]
             self.geometrias['Compleja'] = best_complex_room
 
             self.meritos = {
@@ -564,6 +571,14 @@ class BROAcousticsGUI(QWidget):
                     self.legend_canvas[key] = canvas_leg
                     self.info_layouts[key].insertWidget(1, canvas_leg)
                     
+                #Dimensiones para Simple
+                if key == "Simple":
+                    try:
+                        Lx_s, Ly_s, Dx_s, Dy_s = self.geometrias["Simple"]
+                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m"
+                        self.label_dimensiones_simple.setText(texto_dim)
+                    except:
+                        self.label_dimensiones_simple.setText("No se pudieron calcular las dimensiones optimizadas.")
 
             #info = self.meritos.get(key, 0)
             #self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {info}")
@@ -584,7 +599,18 @@ class BROAcousticsGUI(QWidget):
                     else:
                         msfd = md = sd = float(merito) #fallback si por algun motivo es un solo numero
                                            
-                    f.write(f"{clave}, {msfd:.4f}, {md:.4f}, {sd:.4f}\n")
+                # Info adicional según el tipo
+                if clave == "Simple":
+                    Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new = self.geometrias['Simple']
+                    extra = f"Lx={Lx_new:.2f} Ly={Ly_new:.2f} Lz ={Lz_new:.2f} Dx={Dx_new:.2f} Dy={Dy_new:.2f} Dz ={Dz_new:.2f}"
+                elif clave == "Compleja":
+                    coords = self.geometrias['Compleja']
+                    extra = "Coordenadas: [" + "; ".join([f"({x:.2f}, {y:.2f})" for x, y in coords]) + "]"
+                else:
+                    extra = "-"
+
+                f.write(f"{clave}, {msfd:.4f}, {md:.4f}, {sd:.4f}, {extra}\n")
+                
             self.terminal.append(f"[INFO] Resultados exportados a {ruta}")
         except Exception as e:
             self.terminal.append(f"[ERROR] Fallo al exportar: {str(e)}")

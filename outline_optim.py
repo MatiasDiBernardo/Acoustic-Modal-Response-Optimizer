@@ -66,7 +66,7 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
         initial_rooms = 500
     if optim_type == "Medium":
         initial_rooms = 1000
-    if optim_type == "Fast":
+    if optim_type == "Slow":
         initial_rooms = 2000
     
     # Resultados

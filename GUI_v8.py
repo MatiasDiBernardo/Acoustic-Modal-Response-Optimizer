@@ -110,24 +110,21 @@ class BROAcousticsGUI(QWidget):
         layout = QVBoxLayout()
         
         # Logo UNTREF
-        logo = QLabel()
-        pixmap = QPixmap('aux/untref_logo.png')
-        pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
-        logo.setPixmap(pixmap)
-        logo.setAlignment(Qt.AlignRight)
-        layout.addWidget(logo)
+        # logo = QLabel()
+        # pixmap = QPixmap('aux/untref_logo.png')
+        # pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
+        # logo.setPixmap(pixmap)
+        # logo.setAlignment(Qt.AlignRight)
+        # layout.addWidget(logo)
 
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
         <ul>
+        <div style='line-height:1.6em;'>
         <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
-        <br>
         <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
-        <br>
         <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
-        <br>
         <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
-        <br>
         <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
         <li>Presione "Generar Optimización" para iniciar el proceso.</li>
         <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
@@ -141,16 +138,16 @@ class BROAcousticsGUI(QWidget):
         layout.addSpacing(100)
 
         # Créditos
-        creditos = QLabel("""
-        <div style="text-align: center;">
-        <h4>Desarrollado por:</h4>
-        <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
-        <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
-        </div>
-        """)
-        creditos.setStyleSheet("color: gray; ")
-        creditos.setWordWrap(True)
-        layout.addWidget(creditos)
+        # creditos = QLabel("""
+        # <div style="text-align: center;">
+        # <h4>Desarrollado por:</h4>
+        # <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
+        # <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
+        # </div>
+        # """)
+        # creditos.setStyleSheet("color: gray; ")
+        # creditos.setWordWrap(True)
+        # layout.addWidget(creditos)
 
         layout.addStretch()
         self.pestana_instrucciones.setLayout(layout)
@@ -174,7 +171,7 @@ class BROAcousticsGUI(QWidget):
             entrada_dim.setToolTip(f'Ingrese la dimensión {dim} de la sala en metros. Poner numeros con punto decimal (ej. 2.5). X: ancho, Y: largo, Z: altura')
             entrada_tol.setToolTip(f'Ingrese la tolerancia para {dim} en metros. Poner numeros con punto decimal (ej. 0.1). X: ancho, Y: largo, Z: altura')
             entrada_dim.setValidator(QDoubleValidator(0.01, 100.0, 5))
-            entrada_tol.setValidator(QDoubleValidator(0, 1, 2))
+            entrada_tol.setValidator(QDoubleValidator(0, 3, 2))
             entrada_dim.setPlaceholderText("m")
             entrada_tol.setPlaceholderText("± m")
             self.entradas[dim] = entrada_dim
@@ -236,10 +233,17 @@ class BROAcousticsGUI(QWidget):
         self.selector_vel.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self.selector_vel.addItems(["Baja", "Media", "Alta"])
         self.selector_vel.setCurrentIndex(1) # Media por defecto
+        self.selector_par = QComboBox()
+        self.selector_par.setToolTip("Seleccione la cantidad de paredes/quiebres deseada.")
+        self.selector_par.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.selector_par.addItems(["2", "3", "4", '5'])
+        self.selector_par.setCurrentIndex(0) # 2 por defecto
 
         
         control_layout.addWidget(QLabel("Velocidad de Optimización:"))
         control_layout.addWidget(self.selector_vel)
+        control_layout.addWidget(QLabel("Cantidad de Paredes/Quiebres:"))
+        control_layout.addWidget(self.selector_par)
         control_layout.addWidget(self.boton_ejecutar)
         control_layout.addWidget(self.boton_pausa)
         control_layout.addWidget(self.boton_exportar)
@@ -247,6 +251,8 @@ class BROAcousticsGUI(QWidget):
         control_layout.addStretch()
         control_group.setLayout(control_layout)
         layout_entrada.addWidget(control_group)
+
+
 
         # AREA DE TERMINAL
         self.terminal = QTextEdit()
@@ -442,7 +448,7 @@ class BROAcousticsGUI(QWidget):
                 canvas.draw()
 
                 # Texto del índice de mérito
-                texto = f"<b>Índice de Mérito:</b><br>{self.meritos.get(key, 0):.3f}"
+                texto = f"<b>Figura de Mérito:</b><br> MSFD: {self.meritos.get(key, 0):.3f} | MD: 12 | SD: 4"
                 self.labels_merito[key].setText(texto)
 
                 # Eliminar viejo legend_canvas si existe

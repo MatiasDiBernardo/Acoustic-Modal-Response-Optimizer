@@ -474,7 +474,7 @@ class BROAcousticsGUI(QWidget):
             }
 
             tiempo_total = time.time() - tiempo_inicio
-            self.terminal.append("[INFO] Optimizacion completada en {tiempo_total:.2f} segundos.")
+            self.terminal.append(f"[INFO] Optimizacion completada en {tiempo_total:.2f} segundos.")
             self.actualizar_curvas_magnitud()
             self.actualizar_plano()
             

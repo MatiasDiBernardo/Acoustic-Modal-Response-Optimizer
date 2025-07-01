@@ -119,18 +119,17 @@ class BROAcousticsGUI(QWidget):
 
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
-        <ul>
-        <div style='line-height:1.6em;'>
-        <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
-        <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
-        <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
-        <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
-        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
-        <li>Presione "Generar Optimización" para iniciar el proceso.</li>
-        <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
-        <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
-        <li>El índice de mérito se mostrará en el plano de la sala.</li>
-        <li>Para más información, consulte la documentación del proyecto.</li>
+        <ul style='line-height:3em;'>
+            <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
+            <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
+            <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
+            <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
+            <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
+            <li>Presione "Generar Optimización" para iniciar el proceso.</li>
+            <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
+            <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
+            <li>El índice de mérito se mostrará en el plano de la sala.</li>
+            <li>Para más información, consulte la documentación del proyecto.</li>
         </ul>
         """)
         instrucciones.setWordWrap(True)
@@ -340,6 +339,13 @@ class BROAcousticsGUI(QWidget):
             self.info_layouts = self.info_layouts if hasattr(self, 'info_layouts') else {}
             self.info_layouts[nombre] = info_layout
 
+            if nombre == "Simple":
+                self.label_dimensiones_simple = QLabel()
+                self.label_dimensiones_simple.setWordWrap(True)
+                self.label_dimensiones_simple.setStyleSheet("color: gray;")
+                self.info_layouts[nombre].addWidget(self.label_dimensiones_simple)
+
+
             self.tabs_plano.addTab(tab, nombre)
             self.axs_plantas[nombre] = ax
             self.canvas_plantas[nombre] = canvas
@@ -469,6 +475,15 @@ class BROAcousticsGUI(QWidget):
                     self.info_layouts[key].insertWidget(1, canvas_leg)
                     
 
+                if key == "Simple":
+                    try:
+                        Lx_s, Ly_s, Dx_s, Dy_s = self.geometrias["Simple"]
+                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m"
+                        self.label_dimensiones_simple.setText(texto_dim)
+                    except:
+                        self.label_dimensiones_simple.setText("No se pudieron calcular las dimensiones optimizadas.")
+
+
                 self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {self.meritos.get(key, 0):.3f}")
 
         except Exception as e:
@@ -480,9 +495,20 @@ class BROAcousticsGUI(QWidget):
             if not ruta:
                 return
             with open(ruta, 'w') as f:
-                f.write("Geometría, Mérito\n")
+                f.write("Geometría; Mérito; Dimensiones\n")
                 for clave, merito in self.meritos.items():
-                    f.write(f"{clave}, {merito:.3f}\n")
+                    extra="-"
+                    if clave == "Simple":
+                        Lx, Ly, Dx, Dy = self.geometrias['Simple']
+                        extra = f"Lx={Lx:.2f} Ly={Ly:.2f} Dx={Dx:.2f} Dy={Dy:.2f}"
+                        
+                    elif clave == "Compleja":
+                       coords = self.geometrias['Compleja']
+                       coord_str = "; ".join([f"({x:.2f}, {y:.2f})" for x, y in coords])
+                       extra = f"Coordenadas: {coord_str}"
+                    
+
+                    f.write(f'{clave}; {merito:.3f}; \"{extra}\"\n')
             self.terminal.append(f"[INFO] Resultados exportados a {ruta}")
         except Exception as e:
             self.terminal.append(f"[ERROR] Fallo al exportar: {str(e)}")
@@ -523,6 +549,7 @@ class BROAcousticsGUI(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    # app.setStyle(QStyleFactory.create("Fusion"))
     ventana = BROAcousticsGUI()
     ventana.show()
     sys.exit(app.exec_())

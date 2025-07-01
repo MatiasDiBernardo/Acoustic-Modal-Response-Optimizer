@@ -435,6 +435,7 @@ class BROAcousticsGUI(QWidget):
 
             # Geometría original
             merit0, mag0 = calculate_initial(Lx, Ly, Lz, fuente, receptor)
+            print("Termino el calculo de geometría original")
 
             # Geometría simple
             best_simple_room, spacing_simple_room, merit1_sm, mag1_sm = find_best_outline(
@@ -450,6 +451,7 @@ class BROAcousticsGUI(QWidget):
             new_receptor = (receptor[0] - dx_room, receptor[1] - dy_room, receptor[2])
 
             merit1, mag1 = calculate_initial(Lx_new, Ly_new, Lz_new, new_fuente, new_receptor)
+            print("Termino el calculo de geometría simple")
 
             # Geometría compleja
             best_complex_room, merit2, mag2 = find_complex_random_optim(
@@ -563,7 +565,8 @@ class BROAcousticsGUI(QWidget):
                     self.info_layouts[key].insertWidget(1, canvas_leg)
                     
 
-                self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {self.meritos.get(key, 0):.3f}")
+            #info = self.meritos.get(key, 0)
+            #self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {info}")
 
         except Exception as e:
             self.terminal.append(f"[ERROR] No se pudo actualizar el plano: {str(e)}")

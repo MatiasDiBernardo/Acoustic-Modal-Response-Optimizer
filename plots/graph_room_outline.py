@@ -9,7 +9,7 @@ def plot_room_outline(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_posi
     Dy = Dy_cm / 100
 
     # Crear la figura y el eje
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 6))
 
     # Contorno de la sala completa
     outer_x = [0, Lx, Lx, 0, 0]
@@ -77,7 +77,7 @@ def plot_multiple_rooms(Lx_cm, Ly_cm, Dx_cm, Dy_cm, source_position, receptor_po
     Dy = Dy_cm / 100
 
     # Crear la figura y el eje
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 6))
 
     # Contorno de la sala reducida (centrada)
     inner_x = [0 + Dx, Lx - Dx, Lx - Dx, 0 + Dx, 0 + Dx]

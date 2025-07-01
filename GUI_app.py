@@ -412,7 +412,13 @@ class BROAcousticsGUI(QWidget):
             receptor = (valores['receptor_x'], valores['receptor_y'], valores['receptor_z'])
 
 
-            velocidad = self.selector_vel.currentText()  # "Baja", "Media", "Alta"
+            velocidad_ui = self.selector_vel.currentText()  # "Baja", "Media", "Alta"
+            mapa_velocidades = {
+                "Baja": "Slow",
+                "Media": "Medium",
+                "Alta": "Fast"
+            }
+            velocidad = mapa_velocidades.get(velocidad_ui, "Medium")  # Por defecto "Medium"
             cantidad_paredes = int(self.selector_par.currentText())
 
             self.terminal.append(f"[INFO] Parámetros leídos correctamente.")

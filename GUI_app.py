@@ -123,18 +123,17 @@ class BROAcousticsGUI(QWidget):
 
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
-        <ul>
-        <div style='line-height:1.6em;'>
-        <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
-        <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
-        <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
-        <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
-        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
-        <li>Presione "Generar Optimización" para iniciar el proceso.</li>
-        <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
-        <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
-        <li>El índice de mérito se mostrará en el plano de la sala.</li>
-        <li>Para más información, consulte la documentación del proyecto.</li>
+        <ul style='line-height:1.6em;'>
+            <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
+            <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
+            <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
+            <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
+            <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
+            <li>Presione "Generar Optimización" para iniciar el proceso.</li>
+            <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
+            <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
+            <li>El índice de mérito se mostrará en el plano de la sala.</li>
+            <li>Para más información, consulte la documentación del proyecto.</li>
         </ul>
         """)
         instrucciones.setWordWrap(True)
@@ -450,7 +449,7 @@ class BROAcousticsGUI(QWidget):
             )
 
             Lx_new, Ly_new, Lz_new = best_simple_room
-            Dx_new, Dy_new = spacing_simple_room
+            Dx_new, Dy_new, Dz_new = spacing_simple_room
             dx_room = (Lx - Lx_new) / 2
             dy_room = (Ly - Ly_new) / 2
 
@@ -462,7 +461,7 @@ class BROAcousticsGUI(QWidget):
 
             # Geometría compleja
             best_complex_room, merit2, mag2 = find_complex_random_optim(
-                Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new, new_fuente, new_receptor, cantidad_paredes, velocidad
+                Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_fuente, new_receptor, cantidad_paredes, velocidad
             )
 
             # Guardar curvas y geometrías

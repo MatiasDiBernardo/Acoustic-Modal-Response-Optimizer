@@ -29,10 +29,7 @@ def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
     Ly_final = calculate_new_dimensiones(Ly_best, Ly, wcs)
     Dy_final = calculate_new_spacing(Ly_final, Ly, Dy)
 
-    Lz_final = calculate_new_dimensiones(Lz_best, Lz, wcs)
-    #Dz_final = calculate_new_spacing(Lz_final, Lz, Dz)
-    
-    final_best_room = (Lx_final, Ly_final, Lz_final)
+    final_best_room = (Lx_final, Ly_final, Lz_best)
     final_spacing = (Dx_final, Dy_final)
     
     return final_best_room, final_spacing

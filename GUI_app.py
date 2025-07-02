@@ -47,7 +47,7 @@ class BROAcousticsGUI(QWidget):
         super().__init__()
         self.setWindowTitle("Optimizador de Respuesta Modal Acústica")
         #self.setGeometry(100, 100, 1400, 800)
-        self.resize(1200, 800)
+        self.resize(1200, 1200)
         #self.adjustSize()
 
         self.scroll = QScrollArea()
@@ -449,7 +449,8 @@ class BROAcousticsGUI(QWidget):
             )
 
             Lx_new, Ly_new, Lz_new = best_simple_room
-            Dx_new, Dy_new, Dz_new = spacing_simple_room
+            Dx_new, Dy_new = spacing_simple_room
+            Dz_new = Dz - (Lz - Lz_new)
             dx_room = (Lx - Lx_new) / 2
             dy_room = (Ly - Ly_new) / 2
 
@@ -463,6 +464,7 @@ class BROAcousticsGUI(QWidget):
             best_complex_room, merit2, mag2 = find_complex_random_optim(
                 Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_fuente, new_receptor, cantidad_paredes, velocidad
             )
+            print("Merito SM", merit1_sm)
 
             # Guardar curvas y geometrías
             self.curvas = {
@@ -531,10 +533,14 @@ class BROAcousticsGUI(QWidget):
                 ax.clear()
 
                 simple = self.geometrias['Simple'] if key != "Original" else []
+                if len(simple) != 0:
+                    simple_dim = [simple[0], simple[1], simple[3], simple[4]]
+                else:
+                    simple_dim = []
                 complexa = self.geometrias[key] if key == "Compleja" else []
 
                 # Dibuja con leyenda interna
-                plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, simple, complexa, ax=ax)
+                plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, simple_dim, complexa, ax=ax)
 
                 # Extraer leyenda antes de borrarla
                 handles, labels = ax.get_legend_handles_labels()
@@ -573,8 +579,8 @@ class BROAcousticsGUI(QWidget):
                 #Dimensiones para Simple
                 if key == "Simple":
                     try:
-                        Lx_s, Ly_s, Dx_s, Dy_s = self.geometrias["Simple"]
-                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m"
+                        Lx_s, Ly_s, Lz_s, Dx_s, Dy_s, Dz_s = self.geometrias["Simple"]
+                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Ly: {Lz_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m<br>Ly: {Dz_s:.2f} m"
                         self.label_dimensiones_simple.setText(texto_dim)
                     except:
                         self.label_dimensiones_simple.setText("No se pudieron calcular las dimensiones optimizadas.")

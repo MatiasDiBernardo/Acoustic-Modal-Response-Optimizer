@@ -1,6 +1,9 @@
 pygame
+matplotlib
 meshio
 h5py
 gmsh
-pyvista
-pyvistaqt
+PyQt5
+mpi4py
+petsc4py
+ufw

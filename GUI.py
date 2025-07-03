@@ -1,5 +1,6 @@
 """
-Prueba de estructura de GUI con resultados obtenidos de ejemplo.
+GUI de Optimización de Respuesta Modal Acústica
+===============================================
 Esta GUI permite al usuario ingresar dimensiones de una sala, posiciones de fuente y receptor,
 y generar una optimización de la respuesta modal acústica.
 Los resultados se muestran en gráficos y se pueden exportar a un archivo CSV.
@@ -28,6 +29,9 @@ from matplotlib.figure import Figure
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from plots.graph_room_outline import plot_room_iterative
+from outline_optim import find_best_outline
+from complex_outline_optim import find_complex_random_optim, calculate_initial
+from plots.graph_mag_response import general_mag_response
 
 def get_scalar(val):
     try:
@@ -43,7 +47,7 @@ class BROAcousticsGUI(QWidget):
         super().__init__()
         self.setWindowTitle("Optimizador de Respuesta Modal Acústica")
         #self.setGeometry(100, 100, 1400, 800)
-        self.resize(1200, 800)
+        self.resize(1200, 1200)
         #self.adjustSize()
 
         self.scroll = QScrollArea()
@@ -110,30 +114,26 @@ class BROAcousticsGUI(QWidget):
         layout = QVBoxLayout()
         
         # Logo UNTREF
-        logo = QLabel()
-        pixmap = QPixmap('aux/untref_logo.png')
-        pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
-        logo.setPixmap(pixmap)
-        logo.setAlignment(Qt.AlignRight)
-        layout.addWidget(logo)
+        # logo = QLabel()
+        # pixmap = QPixmap('aux/untref_logo.png')
+        # pixmap = pixmap.scaledToWidth(150, Qt.SmoothTransformation)
+        # logo.setPixmap(pixmap)
+        # logo.setAlignment(Qt.AlignRight)
+        # layout.addWidget(logo)
 
         instrucciones = QLabel("""
         <h3>Instrucciones de uso:</h3>
-        <ul>
-        <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
-        <br>
-        <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
-        <br>
-        <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
-        <br>
-        <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
-        <br>
-        <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
-        <li>Presione "Generar Optimización" para iniciar el proceso.</li>
-        <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
-        <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
-        <li>El índice de mérito se mostrará en el plano de la sala.</li>
-        <li>Para más información, consulte la documentación del proyecto.</li>
+        <ul style='line-height:1.6em;'>
+            <li>Ingrese las dimensiones de la sala y sus tolerancias, en metros.</li>
+            <li>Las dimensiones y tolerancias deben ser números decimales con hasta 2 dígitos.</li>
+            <li>Ingrese las posiciones del receptor y la fuente sonora, en metros.</li>
+            <li>Los campos de entrada aceptan números decimales con hasta 5 dígitos.</li>
+            <li>Seleccione la velocidad de optimización deseada (Baja, Media, Alta).</>
+            <li>Presione "Generar Optimización" para iniciar el proceso.</li>
+            <li>Use los checkboxes para mostrar/ocultar curvas en la respuesta modal.</li>
+            <li>Para ver el plano de la sala, asegúrese de que las dimensiones y posiciones sean correctas.</li>
+            <li>El índice de mérito se mostrará en el plano de la sala.</li>
+            <li>Para más información, consulte la documentación del proyecto.</li>
         </ul>
         """)
         instrucciones.setWordWrap(True)
@@ -141,16 +141,16 @@ class BROAcousticsGUI(QWidget):
         layout.addSpacing(100)
 
         # Créditos
-        creditos = QLabel("""
-        <div style="text-align: center;">
-        <h4>Desarrollado por:</h4>
-        <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
-        <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
-        </div>
-        """)
-        creditos.setStyleSheet("color: gray; ")
-        creditos.setWordWrap(True)
-        layout.addWidget(creditos)
+        # creditos = QLabel("""
+        # <div style="text-align: center;">
+        # <h4>Desarrollado por:</h4>
+        # <p>Matías Di Bernardo, Matías Vereertbrugghen, Camila Romina Lucana y María Victoria Alongi</p>
+        # <p><i>Instrumentos y Mediciones Acústicas - Ingeniería en Sonido - UNTREF @2025</i></p>
+        # </div>
+        # """)
+        # creditos.setStyleSheet("color: gray; ")
+        # creditos.setWordWrap(True)
+        # layout.addWidget(creditos)
 
         layout.addStretch()
         self.pestana_instrucciones.setLayout(layout)
@@ -174,7 +174,7 @@ class BROAcousticsGUI(QWidget):
             entrada_dim.setToolTip(f'Ingrese la dimensión {dim} de la sala en metros. Poner numeros con punto decimal (ej. 2.5). X: ancho, Y: largo, Z: altura')
             entrada_tol.setToolTip(f'Ingrese la tolerancia para {dim} en metros. Poner numeros con punto decimal (ej. 0.1). X: ancho, Y: largo, Z: altura')
             entrada_dim.setValidator(QDoubleValidator(0.01, 100.0, 5))
-            entrada_tol.setValidator(QDoubleValidator(0, 1, 2))
+            entrada_tol.setValidator(QDoubleValidator(0, 3, 2))
             entrada_dim.setPlaceholderText("m")
             entrada_tol.setPlaceholderText("± m")
             self.entradas[dim] = entrada_dim
@@ -236,10 +236,17 @@ class BROAcousticsGUI(QWidget):
         self.selector_vel.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         self.selector_vel.addItems(["Baja", "Media", "Alta"])
         self.selector_vel.setCurrentIndex(1) # Media por defecto
+        self.selector_par = QComboBox()
+        self.selector_par.setToolTip("Seleccione la cantidad de paredes/quiebres deseada.")
+        self.selector_par.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.selector_par.addItems(["2", "3", "4", '5'])
+        self.selector_par.setCurrentIndex(0) # 2 por defecto
 
         
         control_layout.addWidget(QLabel("Velocidad de Optimización:"))
         control_layout.addWidget(self.selector_vel)
+        control_layout.addWidget(QLabel("Cantidad de Paredes/Quiebres:"))
+        control_layout.addWidget(self.selector_par)
         control_layout.addWidget(self.boton_ejecutar)
         control_layout.addWidget(self.boton_pausa)
         control_layout.addWidget(self.boton_exportar)
@@ -247,6 +254,8 @@ class BROAcousticsGUI(QWidget):
         control_layout.addStretch()
         control_group.setLayout(control_layout)
         layout_entrada.addWidget(control_group)
+
+
 
         # AREA DE TERMINAL
         self.terminal = QTextEdit()
@@ -334,6 +343,13 @@ class BROAcousticsGUI(QWidget):
             self.info_layouts = self.info_layouts if hasattr(self, 'info_layouts') else {}
             self.info_layouts[nombre] = info_layout
 
+            if nombre == "Simple":
+                self.label_dimensiones_simple = QLabel()
+                self.label_dimensiones_simple.setWordWrap(True)
+                self.label_dimensiones_simple.setStyleSheet("color: gray;")
+                self.info_layouts[nombre].addWidget(self.label_dimensiones_simple)
+    
+
             self.tabs_plano.addTab(tab, nombre)
             self.axs_plantas[nombre] = ax
             self.canvas_plantas[nombre] = canvas
@@ -354,38 +370,128 @@ class BROAcousticsGUI(QWidget):
         self.geometrias = {}
         self.meritos = {}
 
+    
     # EJECUCION DE LA OPTIMIZACION: Ejecuta la optimización y actualiza las gráficas
     def ejecutar_optimizacion(self):
         try:
             self.terminal.clear()
-            start_time = time.time() #Esto no se si lo hace alguna parte del código, pero lo dejo por si acaso
             self.terminal.append("[INFO] Iniciando optimización...")
 
-            mag0 = np.load("example/mag0.npy")
-            mag1 = np.load("example/mag_g1.npy")
-            mag4 = np.load("example/mag_g4.npy")[0]
+            # === VALIDACIÓN DE ENTRADAS ===
+            campos_requeridos = [
+            'Lx', 'Ly', 'Lz', 'tol_Lx', 'tol_Ly', 'tol_Lz',
+            'fuente_x', 'fuente_y', 'fuente_z',
+            'receptor_x', 'receptor_y', 'receptor_z'
+            ]
 
+            valores = {}
+            for clave in campos_requeridos:
+                texto = self.entradas[clave].text().strip()
+                if texto == "":
+                    QMessageBox.warning(self, "Campo incompleto", f"El campo '{clave}' está vacío.")
+                    self.terminal.append(f"[ERROR] Campo vacío: {clave}")
+                    return
+                try:
+                    valor = float(texto)
+                    if valor < 0:
+                        raise ValueError("Valor negativo")
+                    valores[clave] = valor
+                except ValueError:
+                    QMessageBox.warning(self, "Valor inválido", f"El campo '{clave}' debe ser un número positivo.")
+                    self.terminal.append(f"[ERROR] Valor inválido en: {clave}")
+                    return
+
+            # Validaciones adicionales (pueden ajustarse)
+            if valores['fuente_z'] > valores['Lz'] or valores['receptor_z'] > valores['Lz']:
+                QMessageBox.warning(self, "Altura inválida", "La posición Z de la fuente o el receptor supera la altura de la sala.")
+                return
+
+            # Leer entradas del usuario (ya funcionan)
+            Lx = valores['Lx']
+            Ly = valores['Ly']
+            Lz = valores['Lz']
+            Dx = valores['tol_Lx']
+            Dy = valores['tol_Ly']
+            Dz = valores['tol_Lz']
+
+            fuente = (valores['fuente_x'], valores['fuente_y'], valores['fuente_z'])
+            receptor = (valores['receptor_x'], valores['receptor_y'], valores['receptor_z'])
+
+
+            velocidad_ui = self.selector_vel.currentText()  # "Baja", "Media", "Alta"
+            mapa_velocidades = {
+                "Baja": "Slow",
+                "Media": "Medium",
+                "Alta": "Fast"
+            }
+            velocidad = mapa_velocidades.get(velocidad_ui, "Medium")  # Por defecto "Medium"
+            cantidad_paredes = int(self.selector_par.currentText())
+
+            self.terminal.append(f"[INFO] Parámetros leídos correctamente.")
+
+            #Medicion de tiempo
+            tiempo_inicio = time.time()
+
+            # Simulación de optimización
+            self.terminal.append("[INFO] Ejecutando optimización...")
+
+            # Frecuencias
+            freqs = np.arange(20, 200, 2) if velocidad == "Fast" else np.arange(20, 200, 1)
+            self.frecuencias = freqs
+
+            # Geometría original
+            merit0, mag0 = calculate_initial(Lx, Ly, Lz, fuente, receptor, velocidad)
+            print("Termino el calculo de geometría original")
+
+            # Geometría simple
+            best_simple_room, spacing_simple_room, merit1_sm, mag1_sm = find_best_outline(
+                Lx, Ly, Lz, Dx, Dy, Dz, fuente, receptor, velocidad
+            )
+
+            Lx_new, Ly_new, Lz_new = best_simple_room
+            Dx_new, Dy_new = spacing_simple_room
+            Dz_new = Dz - (Lz - Lz_new)
+            dx_room = (Lx - Lx_new) / 2
+            dy_room = (Ly - Ly_new) / 2
+
+            new_fuente = (fuente[0] - dx_room, fuente[1] - dy_room, fuente[2])
+            new_receptor = (receptor[0] - dx_room, receptor[1] - dy_room, receptor[2])
+
+            merit1, mag1 = calculate_initial(Lx_new, Ly_new, Lz_new, new_fuente, new_receptor, velocidad)
+            print("Termino el calculo de geometría simple")
+
+            # Geometría compleja
+            best_complex_room, merit2, mag2 = find_complex_random_optim(
+                Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, new_fuente, new_receptor, cantidad_paredes, velocidad
+            )
+            print("Merito SM", merit1_sm)
+
+            # Guardar curvas y geometrías
             self.curvas = {
-                'Original': (self.frecuencias, mag0),
-                'Simple': (self.frecuencias, mag1),
-                'Compleja': (self.frecuencias, mag4),
+                'Original': (freqs, mag0),
+                'Simple': (freqs, mag1),
+                'Compleja': (freqs, mag2),
             }
 
             self.geometrias['Original'] = []
-            self.meritos['Original'] = get_scalar(np.load("example/merit_0.npy"))
+            self.geometrias['Simple'] = [Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new]
+            self.geometrias['Compleja'] = best_complex_room
 
-            self.geometrias['Simple'] = np.load("example/best_dimensiones_g1.npy")[[0,1,3,4]]
-            self.meritos['Simple'] = get_scalar(np.load("example/merit_g1.npy"))
+            self.meritos = {
+                'Original': merit0,    #merit0 = (msfd, md, sd)
+                'Simple': merit1,
+                'Compleja': merit2,
+            }
 
-            self.geometrias['Compleja'] = np.load("example/rooms_g4.npy")[0]
-            self.meritos['Compleja'] = get_scalar(np.load("example/merits_g4.npy")[0])
-
+            tiempo_total = time.time() - tiempo_inicio
+            self.terminal.append(f"[INFO] Optimizacion completada en {tiempo_total:.2f} segundos.")
             self.actualizar_curvas_magnitud()
             self.actualizar_plano()
-            self.terminal.append("[INFO] Optimización completada.")
+            
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Error en la optimización:\n{str(e)}")
+            QMessageBox.warning(self, "Error", f"Error en la lectura de entradas:\n{str(e)}")
             self.terminal.append(f"[ERROR] {str(e)}")
+
 
     def actualizar_curvas_magnitud(self):
         self.ax_magnitud.clear()
@@ -401,6 +507,11 @@ class BROAcousticsGUI(QWidget):
             "Simple": "lime",
             "Compleja": "magenta"
         }
+        # colores = {
+        #     "Original": "dodgerblue",
+        #     "Simple": "green",
+        #     "Compleja": "red"
+        # }
 
         # Curvas visibles según checkboxes
         for key in ["Original", "Simple", "Compleja"]:
@@ -412,8 +523,6 @@ class BROAcousticsGUI(QWidget):
         self.fig_magnitud.tight_layout()
         self.canvas_magnitud.draw()
 
-    # ACTUALIZACION DEL PLANO DE LA SALA: Grafica el plano de la sala con las geometrías seleccionadas
-    # y muestra el índice de mérito correspondiente
     def actualizar_plano(self):
         try:
             Lx = float(self.entradas['Lx'].text() or 2.5)
@@ -429,10 +538,14 @@ class BROAcousticsGUI(QWidget):
                 ax.clear()
 
                 simple = self.geometrias['Simple'] if key != "Original" else []
+                if len(simple) != 0:
+                    simple_dim = [simple[0], simple[1], simple[3], simple[4]]
+                else:
+                    simple_dim = []
                 complexa = self.geometrias[key] if key == "Compleja" else []
 
                 # Dibuja con leyenda interna
-                plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, simple, complexa, ax=ax)
+                plot_room_iterative((Lx, Ly, Dx, Dy), pos_fuente, pos_receptor, simple_dim, complexa, ax=ax)
 
                 # Extraer leyenda antes de borrarla
                 handles, labels = ax.get_legend_handles_labels()
@@ -443,7 +556,12 @@ class BROAcousticsGUI(QWidget):
                 canvas.draw()
 
                 # Texto del índice de mérito
-                texto = f"<b>Índice de Mérito:</b><br>{self.meritos.get(key, 0):.3f}"
+                if key in self.meritos:
+                    msfd, md, sv = self.meritos[key]
+                    texto = f"<b>Figura de Mérito:</b><br> MSFD: {msfd:.3f} | MD: {md:.3f} | SD: {sv:.3f}"
+                else:
+                    texto = "Figura de Mérito no disponible."
+
                 self.labels_merito[key].setText(texto)
 
                 # Eliminar viejo legend_canvas si existe
@@ -463,8 +581,17 @@ class BROAcousticsGUI(QWidget):
                     self.legend_canvas[key] = canvas_leg
                     self.info_layouts[key].insertWidget(1, canvas_leg)
                     
+                #Dimensiones para Simple
+                if key == "Simple":
+                    try:
+                        Lx_s, Ly_s, Lz_s, Dx_s, Dy_s, Dz_s = self.geometrias["Simple"]
+                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Lz: {Lz_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m<br>Dz: {Dz_s:.2f} m"
+                        self.label_dimensiones_simple.setText(texto_dim)
+                    except:
+                        self.label_dimensiones_simple.setText("No se pudieron calcular las dimensiones optimizadas.")
 
-                self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {self.meritos.get(key, 0):.3f}")
+            #info = self.meritos.get(key, 0)
+            #self.terminal.append(f"[INFO] Plano {key} graficado. Índice de mérito: {info}")
 
         except Exception as e:
             self.terminal.append(f"[ERROR] No se pudo actualizar el plano: {str(e)}")
@@ -475,9 +602,25 @@ class BROAcousticsGUI(QWidget):
             if not ruta:
                 return
             with open(ruta, 'w') as f:
-                f.write("Geometría, Mérito\n")
+                f.write("Geometría, MSFD, MD, SD\n")
                 for clave, merito in self.meritos.items():
-                    f.write(f"{clave}, {merito:.3f}\n")
+                    if isinstance(merito, (tuple, list)) and len(merito) == 3:
+                        msfd, md, sd = merito
+                    else:
+                        msfd = md = sd = float(merito) #fallback si por algun motivo es un solo numero
+                                           
+                # Info adicional según el tipo
+                if clave == "Simple":
+                    Lx_new, Ly_new, Lz_new, Dx_new, Dy_new, Dz_new = self.geometrias['Simple']
+                    extra = f"Lx={Lx_new:.2f} Ly={Ly_new:.2f} Lz ={Lz_new:.2f} Dx={Dx_new:.2f} Dy={Dy_new:.2f} Dz ={Dz_new:.2f}"
+                elif clave == "Compleja":
+                    coords = self.geometrias['Compleja']
+                    extra = "Coordenadas: [" + "; ".join([f"({x:.2f}, {y:.2f})" for x, y in coords]) + "]"
+                else:
+                    extra = "-"
+
+                f.write(f"{clave}, {msfd:.4f}, {md:.4f}, {sd:.4f}, {extra}\n")
+                
             self.terminal.append(f"[INFO] Resultados exportados a {ruta}")
         except Exception as e:
             self.terminal.append(f"[ERROR] Fallo al exportar: {str(e)}")

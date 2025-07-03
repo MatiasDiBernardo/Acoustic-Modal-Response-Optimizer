@@ -1,10 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
-from room.geometry_generator import calculation_of_geometry, calculation_of_geometry_simple
-from mesh.mesh_3D_generator import generate_mesh_parallelepiped
-from mesh.mesh_3D_simple import create_simple_mesh
-from FEM.FEM_source import FEM_Source_Solver_Average
+from room.geometry_generator import calculation_of_geometry_simple
 from FEM.mode_sumation import compute_modal_sum_average
 from aux.merit_figure import merit_spatial_deviation, merit_magnitude_deviation
 
@@ -35,8 +31,8 @@ def recalculate_spatial_dimensions(best_room, Lx, Ly, Lz, Dx, Dy, Dz):
     return final_best_room, final_spacing
 
 def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position, optim_type):
-    """Encuentra el mejor cuarto paralelepipedo en base a las dimensiones del cuarto y un
-    margen para hacer pruebas de opimización
+    """Encuentra el mejor cuarto paralelepipedo en base a las dimensiones del cuarto y el
+    margen seleccionado. Utiliza SM para el calculo de respuesta en frecuencia.
 
     Args:
         Lx (float): Ancho en metros
@@ -104,4 +100,3 @@ def find_best_outline(Lx, Ly, Lz, Dx, Dy, Dz, source_position, receptor_position
     mag = np.sum(mag_best, axis=0)/7
 
     return final_best_room, best_room_spacing, merit, mag
-

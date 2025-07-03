@@ -10,5 +10,5 @@ sudo apt-get install fenics
 # Dependencies for Mesh Generation
 sudo apt install libglu1-mesa -Y
 
-# Dependencias de python (asumimos que ya esta instalado y que es un fresh environment)
+# Dependencias de python (se recomienda instalar en un entorno nuevo)
 pip install -r requirements.txt

@@ -436,11 +436,11 @@ class BROAcousticsGUI(QWidget):
             self.terminal.append("[INFO] Ejecutando optimización...")
 
             # Frecuencias
-            freqs = np.arange(20, 200, 2) if velocidad == "Alta" else np.arange(20, 200, 1)
+            freqs = np.arange(20, 200, 2) if velocidad == "Fast" else np.arange(20, 200, 1)
             self.frecuencias = freqs
 
             # Geometría original
-            merit0, mag0 = calculate_initial(Lx, Ly, Lz, fuente, receptor)
+            merit0, mag0 = calculate_initial(Lx, Ly, Lz, fuente, receptor, velocidad)
             print("Termino el calculo de geometría original")
 
             # Geometría simple
@@ -457,7 +457,7 @@ class BROAcousticsGUI(QWidget):
             new_fuente = (fuente[0] - dx_room, fuente[1] - dy_room, fuente[2])
             new_receptor = (receptor[0] - dx_room, receptor[1] - dy_room, receptor[2])
 
-            merit1, mag1 = calculate_initial(Lx_new, Ly_new, Lz_new, new_fuente, new_receptor)
+            merit1, mag1 = calculate_initial(Lx_new, Ly_new, Lz_new, new_fuente, new_receptor, velocidad)
             print("Termino el calculo de geometría simple")
 
             # Geometría compleja
@@ -580,7 +580,7 @@ class BROAcousticsGUI(QWidget):
                 if key == "Simple":
                     try:
                         Lx_s, Ly_s, Lz_s, Dx_s, Dy_s, Dz_s = self.geometrias["Simple"]
-                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Ly: {Lz_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m<br>Ly: {Dz_s:.2f} m"
+                        texto_dim = f"<b>Dimensiones optimizadas:</b><br>Lx: {Lx_s:.2f} m<br>Ly: {Ly_s:.2f} m<br>Lz: {Lz_s:.2f} m<br>Dx: {Dx_s:.2f} m<br>Dy: {Dy_s:.2f} m<br>Dz: {Dz_s:.2f} m"
                         self.label_dimensiones_simple.setText(texto_dim)
                     except:
                         self.label_dimensiones_simple.setText("No se pudieron calcular las dimensiones optimizadas.")

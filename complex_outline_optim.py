@@ -297,12 +297,16 @@ def find_complex_outline_gen4(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     return best_rooms, merit, best_mag
 
-def calculate_initial(Lx, Ly, Lz, source_position, receptor_position):
+def calculate_initial(Lx, Ly, Lz, source_position, receptor_position, optim_type):
     """
     Calcula el valor de mérito para la sala inicial
     """
     fmax = 200
-    res_freq = 1
+    
+    if optim_type == "Fast":
+        res_freq = 2
+    else:
+        res_freq = 1
 
     mesh1 = "room_base_optim1"
     mesh2 = "room_base_optim2"
@@ -364,13 +368,13 @@ def find_complex_random_optim(Lx, Ly, Lz, Dx, Dy, source_position, receptor_posi
     
     # Cantidad de salas a generar
     if optim_type == "Fast":
-        rooms_iterate = 5  # 50
+        rooms_iterate = 70  # 50
         res_freq = 2
     if optim_type == "Medium":
-        rooms_iterate = 10 # 150
+        rooms_iterate = 100 # 150
         res_freq = 1
     if optim_type == "Slow":
-        rooms_iterate = 20 # 200
+        rooms_iterate = 200 # 200
         res_freq = 1
 
     # Agregar control dentro de gem generation de que si tarda mucho en contrar los M salas corte

@@ -1,7 +1,9 @@
 # Acoustic Modal Response Optimizer
 
 ## Descripción
-Esta aplicación de código abierto permite optimizar de forma automática la distribución modal en salas de control acústico mediante un enfoque híbrido que combina búsqueda exhaustiva de proporciones geométricas y análisis por Elementos Finitos en frecuencia (FD‑FEM).
+
+Esta aplicación permite optimizar de forma automática la distribución modal en salas de control acústico. Se utiliza el método por elemenots finitos (FD-FEM) para obtener la respuesta en frecuencia de salas con diferentes geometrías y se optimiza por fuerza bruta para encontrar la sala con mejor respuesta en magnitud y en el espacio. 
+
 ---
 
 ## Captura de pantalla de la interfaz

@@ -40,3 +40,4 @@ Esta aplicación permite optimizar de forma automática la distribución modal e
    ```
 
 Se recomienda tener un entorno nuevo antes de comenzar con el proceso de instalación para evitar conflictos inesperados.
+El código se parte del artículo ...
